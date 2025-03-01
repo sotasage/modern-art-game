@@ -2,6 +2,7 @@
 
 import type { Card, Gem, Method, Player } from "../types";
 
+// 山札を作成する関数
 export function createDeck(): Card[] {
     const gems: Gem[] = ['diamond', 'emerald', 'sapphire', 'ruby', 'amethyst'];
     const methods: Method[] = ["公開競り", "一声", "入札", "指し値", "ダブルオークション"];
@@ -26,6 +27,7 @@ export function createDeck(): Card[] {
     return deck;
 }
 
+// 山札をシャッフルする関数
 export function shuffleDeck(deck: Card[]): Card[] {
     // 元の配列を変更しないよう、コピーを作成
     const shuffled = [...deck];
@@ -39,6 +41,7 @@ export function shuffleDeck(deck: Card[]): Card[] {
     return shuffled;
 }
 
+// カードを配る関数
 export function dealCards(deck: Card[], players: Player[], number: number): { updatedPlayers: Player[], remainingDeck: Card[] } {
     const remainingDeck = [...deck];
     const updatedPlayers = players.map(player => ({
@@ -56,5 +59,36 @@ export function dealCards(deck: Card[], players: Player[], number: number): { up
     }
 
     return { updatedPlayers, remainingDeck };
+}
+
+// 手札を整理する関数
+export function sortCard(hand: Card[]): Card[] {
+    // 宝石の優先順位を定義
+    const gemOrder: Record<Gem, number> = {
+        'diamond': 1,
+        'emerald': 2,
+        'sapphire': 3,
+        'ruby': 4,
+        'amethyst': 5
+    };
+    // オークション方法の優先順位を定義
+    const methodOrder: Record<Method, number> = {
+        '公開競り': 1,
+        '一声': 2,
+        '入札': 3,
+        '指し値': 4,
+        'ダブルオークション': 5
+    };
+    
+    return [...hand].sort((a, b) => {
+        // まず宝石タイプで比較
+        if (gemOrder[a.gem] !== gemOrder[b.gem]) {
+          return gemOrder[a.gem] - gemOrder[b.gem];
+        }
+        
+        // 宝石タイプが同じ場合はオークション方法で比較
+        return methodOrder[a.method] - methodOrder[b.method];
+    });
+
 }
   
