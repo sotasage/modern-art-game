@@ -1,8 +1,9 @@
 import React from 'react'
 import { Card } from '@/components/ui/card'
+import type { Method } from '@/lib/types'
 
 type Props = {
-  method: string,
+  method: Method,
 }
 
 const SapphireCard = (props: Props) => {
@@ -14,7 +15,7 @@ const SapphireCard = (props: Props) => {
 
         <svg width="100" height="100" viewBox="0 0 100 100">
             <ellipse cx="50" cy="50" rx="35" ry="25" fill="#0F52BA" stroke="#09347A" strokeWidth="2"/>
-            <ellipse cx="50" cy="50" rx="35" ry="25" fill="#0F52BA" fill-opacity="0.7"/>
+            <ellipse cx="50" cy="50" rx="35" ry="25" fill="#0F52BA" fillOpacity="0.7"/>
             <ellipse cx="40" cy="40" rx="8" ry="5" fill="white" fillOpacity="0.6"/>
             <ellipse cx="60" cy="60" rx="5" ry="3" fill="white" fillOpacity="0.4"/>
         </svg>

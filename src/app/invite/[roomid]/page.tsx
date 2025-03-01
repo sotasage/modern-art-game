@@ -1,4 +1,4 @@
-import InputUserName from '@/components/InputUserName';
+import InputUserName from '@/components/others/InputUserName';
 import { supabase } from '@/lib/supabase';
 
 type paramsProp = {

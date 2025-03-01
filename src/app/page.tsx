@@ -1,6 +1,6 @@
 "use client"
 
-import InputUserName from '@/components/InputUserName';
+import InputUserName from '@/components/others/InputUserName';
 import usePlayerStore from '@/store/playerStore';
 import { useEffect } from 'react';
 

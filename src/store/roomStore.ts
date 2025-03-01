@@ -17,7 +17,7 @@ type RoomState = {
 
 const useRoomStore = create<RoomState>()(
     persist(
-        (set) => ({
+        (set, get) => ({
             roomId: null,
             members: [],
             setMembers: (members) => set({ members: members }),
@@ -47,6 +47,7 @@ const useRoomStore = create<RoomState>()(
                     return;
                 }
                 set({members: data});
+                console.log(get().members);
             },
             addMember: (member) => set((state) => ({
                 members: [...state.members, member]

@@ -1,8 +1,9 @@
 import React from 'react'
 import { Card } from '@/components/ui/card'
+import type { Method } from '@/lib/types'
 
 type Props = {
-    method: string,
+    method: Method,
 }
 
 const AmethystCard = (props: Props) => {

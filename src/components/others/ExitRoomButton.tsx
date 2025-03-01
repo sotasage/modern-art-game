@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react'
-import { Button } from './ui/button'
+import { Button } from '../ui/button'
 import usePlayerStore from '@/store/playerStore'
 import useRoomStore from '@/store/roomStore'
 import { useRouter } from "next/navigation";
@@ -9,8 +9,13 @@ import { supabase } from '@/lib/supabase'
 
 const ExitRoomButton = () => {
     const router = useRouter();
-    const { setIsLoading, playerId, resetPlayerState } = usePlayerStore();
-    const { members, roomId, resetRoomState } = useRoomStore();
+    const roomId = useRoomStore(state => state.roomId);
+    const members = useRoomStore(state => state.members);
+    const resetRoomState = useRoomStore(state => state.resetRoomState);
+    const playerId = usePlayerStore(state => state.playerId);
+    const setIsLoading = usePlayerStore(state => state.setIsLoading);
+    const resetPlayerState = usePlayerStore(state => state.resetPlayerState);
+    
     const handleExitRoom = async () => {
         if (!playerId || !roomId) return;
         setIsLoading(true);

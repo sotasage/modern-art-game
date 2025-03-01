@@ -31,8 +31,11 @@ type Prop =  {
 };
 
 const InputUserName = (props: Prop) => {
-  const { createRoom, setRoomId } = useRoomStore();
-  const { createPlayer, setIsLoading, setIsRoomMaster } = usePlayerStore();
+  const createRoom = useRoomStore(state => state.createRoom);
+  const setRoomId = useRoomStore(state => state.setRoomId);
+  const createPlayer = usePlayerStore(state => state.createPlayer);
+  const setIsLoading = usePlayerStore(state => state.setIsLoading);
+  const setIsRoomMaster = usePlayerStore(state => state.setIsRoomMaster);
   const router = useRouter();
   
 

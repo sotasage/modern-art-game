@@ -7,21 +7,24 @@ type PlayerState = {
     playerName: string | null;
     isLoading: boolean;
     isRoomMaster: boolean;
+    turn: number;
     createPlayer: (playerName: string, roomId: string) => Promise<void>;
     resetPlayerState: () => void;
     setPlayerId: (playerId: string) => void;
     setPlayerName: (playerName: string) => void;
     setIsLoading: (isLoading: boolean) => void;
     setIsRoomMaster: (isRoomMaster: boolean) => void;
+    setTurn: (turn: number) => void;
 };
 
 const usePlayerStore = create<PlayerState>()(
     persist(
-        (set) => ({
+        (set, get) => ({
             playerId: null,
             playerName: null,
             isLoading: false,
             isRoomMaster: false,
+            turn: -1,
             createPlayer: async (playerName, roomId) => {
                 const { data: playerData, error: playerError } = await supabase
                     .from("players")
@@ -33,6 +36,7 @@ const usePlayerStore = create<PlayerState>()(
                     return;
                 }
                 set({ playerId: playerData.id, playerName: playerData.name })
+                console.log(get().playerId);
             },
             resetPlayerState: () => {
                 set({playerId: null, playerName: null});
@@ -41,6 +45,7 @@ const usePlayerStore = create<PlayerState>()(
             setPlayerName: (playerName) => set({playerName: playerName}),
             setIsLoading: (isLoading) => set({isLoading: isLoading}),
             setIsRoomMaster: (isRoomMaster) => set({isRoomMaster: isRoomMaster}),
+            setTurn: (turn) => set({turn: turn}),
         }),
         {
             name: 'player-storage', // ストレージのキー名

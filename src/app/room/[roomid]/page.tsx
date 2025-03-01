@@ -3,31 +3,39 @@
 import useRoomStore from "@/store/roomStore";
 import usePlayerStore from "@/store/playerStore";
 import { Card, CardContent, CardTitle, CardHeader, } from '@/components/ui/card'
-import PlayerCard from '@/components/PlayerCard'
-import InviteUrl from "@/components/InviteUrl";
+import PlayerCard from '@/components/others/PlayerCard'
+import InviteUrl from "@/components/others/InviteUrl";
 import { useEffect } from 'react';
 import { supabase } from "@/lib/supabase";
 import type { RoomMember } from '@/lib/types';
-import ExitRoomButton from "@/components/ExitRoomButton";
-import GameStartButton from "@/components/GameStartButton";
+import ExitRoomButton from "@/components/others/ExitRoomButton";
+import GameStartButton from "@/components/others/GameStartButton";
+import { useRouter } from "next/navigation";
 
 
 const RoomPage = () => {
-  const { 
-    roomId,
-    members, 
-    fetchMembers, 
-    addMember, 
-    removeMember, 
-  } = useRoomStore();
-  const { playerId, isLoading, isRoomMaster, setIsRoomMaster, setIsLoading } = usePlayerStore();
+  const roomId = useRoomStore(state => state.roomId);
+  const members = useRoomStore(state => state.members);
+  const fetchMembers = useRoomStore(state => state.fetchMembers);
+  const addMember = useRoomStore(state => state.addMember);
+  const removeMember = useRoomStore(state => state.removeMember);
+
+  const playerId = usePlayerStore(state => state.playerId);
+  const isLoading = usePlayerStore(state => state.isLoading);
+  const isRoomMaster = usePlayerStore(state => state.isRoomMaster);
+  const setIsRoomMaster = usePlayerStore(state => state.setIsRoomMaster);
+  const setIsLoading = usePlayerStore(state => state.setIsLoading);
+
+  const router = useRouter();
+
   useEffect(() => {
     if (!roomId) return;
 
     // 初期データ取得
     fetchMembers(roomId);
     setIsLoading(false);
-    console.log(members);
+    console.log(roomId);
+    console.log(useRoomStore.getState().members);
     // リアルタイム購読のセットアップ
     const subscription1 = supabase
       .channel(`room-${roomId}-changes`)
@@ -45,6 +53,7 @@ const RoomPage = () => {
           if (payload.eventType === 'INSERT') {
             console.log("add player");
             addMember(payload.new as RoomMember);
+            console.log(useRoomStore.getState().members);
           }
         }
       )
@@ -64,21 +73,40 @@ const RoomPage = () => {
           if (payload.eventType === 'DELETE') {
             console.log("delete player");
             removeMember(payload.old.id);
-            if (playerId === members[0].id) setIsRoomMaster(true);
+            if (playerId === useRoomStore.getState().members[0].id) setIsRoomMaster(true);
             else setIsRoomMaster(false);
-            console.log(isRoomMaster);
-            console.log(members);
+            console.log(usePlayerStore.getState().isRoomMaster);
+            console.log(useRoomStore.getState().members);
           }
         }
       )
       .subscribe();
-    
+      const subscription3 = supabase
+      .channel(`game-${roomId}-start`)
+      .on('postgres_changes', 
+        { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'rooms',
+        }, 
+        (payload) => {
+          console.log('リアルタイム更新:', payload);
+          
+          if (payload.eventType === 'UPDATE') {
+            console.log("game start!");
+            setIsLoading(true);
+            router.push(`/game/${roomId}`);
+          }
+        }
+      )
+      .subscribe();
     // クリーンアップ関数
     return () => {
       supabase.removeChannel(subscription1);
       supabase.removeChannel(subscription2);
+      supabase.removeChannel(subscription3);
     };
-  }, [roomId, isRoomMaster, fetchMembers, addMember, removeMember, setIsRoomMaster]);
+  }, [roomId, isRoomMaster, fetchMembers, addMember, removeMember, setIsRoomMaster, setIsLoading]);// membersを含めると無限ループするので注意
 
   if (isLoading) {
     return <div>読み込み中...</div>;

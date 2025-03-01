@@ -12,6 +12,7 @@ export function cleanupLocalStorage() {
         console.log('localStorageクリーンアップを実行します');
         localStorage.removeItem('player-storage');
         localStorage.removeItem('room-storage');
+        localStorage.removeItem('game-storage');
         localStorage.setItem('last_storage_cleanup', now.toString());
       }
     } catch (error) {
