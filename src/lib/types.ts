@@ -17,7 +17,6 @@ export type Card = {
 export type Player = {
     id: string;
     name: string;
-    hand: Card[];
 }
 
 export type MarketValue = {

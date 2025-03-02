@@ -5,15 +5,13 @@ import usePlayerStore from '@/store/playerStore';
 import PlayerHand from '@/components/others/PlayerHand';
 import PossessedMoney from '@/components/others/PossessedMoney';
 import MarketValueTable from '@/components/others/MarketValueTable';
+import NowActionedCards from '@/components/others/NowActionedCards';
+import PurchasedCards from '@/components/others/PurchasedCards';
 import useGameStore from '@/store/gameStore';
 import useRoomStore from '@/store/roomStore';
 
 const GamePage = () => {
     const isLoading = usePlayerStore(state => state.isLoading);
-    const turn = usePlayerStore(state => state.turn);
-    const players = useGameStore(state => state.players);
-    const money = useGameStore(state => state.money);
-    const marketValueList = useGameStore(state => state.marketValueList);
 
     useEffect(() => {
         (async () => {
@@ -38,9 +36,11 @@ const GamePage = () => {
 
     return (
         <div> 
-            <PlayerHand cards={players[turn].hand} />
-            <MarketValueTable marketValueList={marketValueList} />
-            <PossessedMoney money={money[turn]} />
+            <PlayerHand/>
+            <MarketValueTable/>
+            <PossessedMoney/>
+            <NowActionedCards/>
+            <PurchasedCards/>
         </div>
     )
 }

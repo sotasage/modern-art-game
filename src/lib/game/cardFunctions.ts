@@ -1,6 +1,6 @@
 "use client"
 
-import type { Card, Gem, Method, Player } from "../types";
+import type { Card, Gem, Method } from "../types";
 
 // 山札を作成する関数
 export function createDeck(): Card[] {
@@ -42,23 +42,20 @@ export function shuffleDeck(deck: Card[]): Card[] {
 }
 
 // カードを配る関数
-export function dealCards(deck: Card[], players: Player[], number: number): { updatedPlayers: Player[], remainingDeck: Card[] } {
+export function dealCards(deck: Card[], hands: Card[][], number: number): { updatedHands: Card[][], remainingDeck: Card[] } {
     const remainingDeck = [...deck];
-    const updatedPlayers = players.map(player => ({
-        ...player,
-        hand: [...player.hand] // 既存の手札をコピー
-    }));
+    const updatedHands = [...hands];
 
     for (let i = 0; i < number; i++) {
-        for (let j = 0; j < updatedPlayers.length; j++) {
+        for (let j = 0; j < hands.length; j++) {
             if (remainingDeck.length > 0) {
                 const card = remainingDeck.shift()!; // 山札の一番上からカードを取る
-                updatedPlayers[j].hand.push(card);
+                hands[j].push(card);
             }
         }
     }
 
-    return { updatedPlayers, remainingDeck };
+    return { updatedHands, remainingDeck };
 }
 
 // 手札を整理する関数

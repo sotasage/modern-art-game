@@ -10,11 +10,13 @@ export function shufflePlayers(players: Player[]) {
     }
 }
 
-export function startGame(members: RoomMember[]): { updatedPlayers: Player[], remainingDeck: Card[] } {
-    const newPlayers: Player[] = [];
+export function startGame(members: RoomMember[]): { updatedPlayers: Player[], updatedHands: Card[][], remainingDeck: Card[] } {
+    const updatedPlayers: Player[] = [];
+    const newHands: Card[][] = Array.from({ length: members.length }, () => []);
     members.map((member) => {
-        newPlayers.push({id: member.id, name: member.name, hand: []});
+        updatedPlayers.push({id: member.id, name: member.name});
     });
+    shufflePlayers(updatedPlayers);
 
     let deck = createDeck();
     deck = shuffleDeck(deck);
@@ -22,8 +24,8 @@ export function startGame(members: RoomMember[]): { updatedPlayers: Player[], re
     let number: number = 10;
     if (members.length === 4) number = 9;
     else if (members.length === 5) number = 8;
-    const { updatedPlayers, remainingDeck } = dealCards(deck, newPlayers, number);
-    shufflePlayers(updatedPlayers);
+    const { updatedHands, remainingDeck } = dealCards(deck, newHands, number);
+
     
-    return { updatedPlayers, remainingDeck };
+    return { updatedPlayers, updatedHands, remainingDeck };
 }

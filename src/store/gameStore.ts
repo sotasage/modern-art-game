@@ -6,9 +6,12 @@ import { supabase } from "@/lib/supabase";
 type GameState = {
     players: Player[];
     deck: Card[];
+    hands: Card[][];
     money: number[];
     nowTurn: number;
     marketValueList: MarketValue[];
+    purchasedCards: Card[][];
+    nowActionedCards: Card[];
     isGameStarted: boolean;
     setPlayers: (players: Player[]) => void;
     setDeck: (deck: Card[]) => void;
@@ -22,15 +25,12 @@ const useGameStore = create<GameState>()(
         (set, get) => ({
             players: [],
             deck: [],
+            hands: [],
             money: [],
             nowTurn: 0,
-            marketValueList: Array.from({ length: 4 }, () => ({
-                diamond: null,
-                emerald: null,
-                sapphire: null,
-                ruby: null,
-                amethyst: null
-            })),
+            marketValueList: [],
+            purchasedCards: [],
+            nowActionedCards: [],
             isGameStarted: false,
             setPlayers: (players) => set({players: players}),
             setDeck: (deck) => set({deck: deck}),
@@ -47,7 +47,17 @@ const useGameStore = create<GameState>()(
                     console.error("ゲームデータ取得エラー", error);
                     return;
                 }
-                set({ players: data.players, deck: data.deck, money: data.money, nowTurn: data.nowTurn, isGameStarted: true });
+                set({
+                    players: data.players,
+                    deck: data.deck,
+                    hands: data.hands,
+                    money: data.money,
+                    nowTurn: data.nowTurn,
+                    marketValueList: data.marketValueList,
+                    purchasedCards: data.purchasedCards,
+                    nowActionedCards: data.nowActionedCards,
+                    isGameStarted: true
+                });
                 console.log(get().players);
             },
         }),
