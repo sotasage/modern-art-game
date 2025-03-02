@@ -28,7 +28,7 @@ const PlayerHand = () => {
     const spacing = Math.max(minSpacing, (maxWidth - cardWidth) / (hand.length - 1 || 1));
 
     return (
-        <div className="fixed left-0 right-0 bottom-2 p-4">
+        <div className="fixed left-0 right-0 bottom-0 p-4">
             <div className="max-w-5xl mx-auto">
                 <div className="flex justify-center">
                     <div className="relative h-40" style={{ width: `${maxWidth}px` }}>
@@ -50,7 +50,7 @@ const PlayerHand = () => {
                                 >
                                     <div
                                         className={`transition-transform duration-300 
-                                            ${isSelected ? "translate-y-[-30px] z-50" : "hover:translate-y-[-15px] hover:z-40"}
+                                            ${isSelected ? "translate-y-[-25px] z-50" : "hover:translate-y-[-15px] hover:z-40"}
                                         `}
                                     >
                                         {card.gem === "diamond" && <DiamondCard method={card.method} />}
