@@ -14,21 +14,22 @@ import { useRouter } from "next/navigation";
 
 
 const RoomPage = () => {
-  const roomId = useRoomStore(state => state.roomId);
   const members = useRoomStore(state => state.members);
-  const fetchMembers = useRoomStore(state => state.fetchMembers);
-  const addMember = useRoomStore(state => state.addMember);
-  const removeMember = useRoomStore(state => state.removeMember);
 
-  const playerId = usePlayerStore(state => state.playerId);
   const isLoading = usePlayerStore(state => state.isLoading);
   const isRoomMaster = usePlayerStore(state => state.isRoomMaster);
-  const setIsRoomMaster = usePlayerStore(state => state.setIsRoomMaster);
-  const setIsLoading = usePlayerStore(state => state.setIsLoading);
 
   const router = useRouter();
 
   useEffect(() => {
+    const roomId = useRoomStore.getState().roomId;
+    const fetchMembers = useRoomStore.getState().fetchMembers;
+    const addMember = useRoomStore.getState().addMember;
+    const removeMember = useRoomStore.getState().removeMember;
+    const playerId = usePlayerStore.getState().playerId;
+    const setIsRoomMaster = usePlayerStore.getState().setIsRoomMaster;
+    const setIsLoading = usePlayerStore.getState().setIsLoading;
+
     if (!roomId) return;
 
     // 初期データ取得
@@ -106,7 +107,7 @@ const RoomPage = () => {
       supabase.removeChannel(subscription2);
       supabase.removeChannel(subscription3);
     };
-  }, [roomId, isRoomMaster, fetchMembers, addMember, removeMember, setIsRoomMaster, setIsLoading]);// membersを含めると無限ループするので注意
+  }, [router]);// membersを含めると無限ループするので注意
 
   if (isLoading) {
     return <div>読み込み中...</div>;
@@ -126,7 +127,12 @@ const RoomPage = () => {
           ))}
         </CardContent>
       </Card>
-      {roomId && <InviteUrl roomId={roomId} />}
+      {
+        (() => {
+          const roomId = useRoomStore.getState().roomId;
+          return roomId && <InviteUrl roomId={roomId} />;
+        })()
+      }
       <div className="flex justify-center mt-3 gap-3">
         <ExitRoomButton/>
         {isRoomMaster && <GameStartButton/>}

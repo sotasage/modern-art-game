@@ -20,8 +20,8 @@ const PlayerHand: React.FC<PlayerHandProps> = ({ cards }) => {
     };
     const hand = sortCard(cards);
 
-    const maxWidth = 1700; // カードを並べる最大幅（表示範囲）
-    const cardWidth = 170; // カード1枚の幅
+    const maxWidth = 1500; // カードを並べる最大幅（表示範囲）
+    const cardWidth = 125; // カード1枚の幅
     const minSpacing = 30; // カード間の最小間隔
 
     // カード間のスペースを動的に計算
@@ -43,7 +43,7 @@ const PlayerHand: React.FC<PlayerHandProps> = ({ cards }) => {
                                     className="absolute transition-transform duration-300"
                                     style={{ 
                                         left: `50%`, 
-                                        transform: `translateX(${offset}px) translateX(-50%)`,
+                                        transform: `translateX(${offset}px) translateX(20%)`,
                                         zIndex: isSelected ? 1000 : index
                                     }}
                                     onClick={() => onClick(index)}

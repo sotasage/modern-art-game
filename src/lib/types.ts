@@ -20,3 +20,11 @@ export type Player = {
     hand: Card[];
 }
 
+export type MarketValue = {
+    diamond: number | null;
+    emerald: number | null;
+    sapphire: number | null;
+    ruby: number | null;
+    amethyst: number | null;
+}
+

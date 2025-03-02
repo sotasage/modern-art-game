@@ -3,22 +3,26 @@
 import React, { useEffect } from 'react'
 import usePlayerStore from '@/store/playerStore';
 import PlayerHand from '@/components/others/PlayerHand';
+import PossessedMoney from '@/components/others/PossessedMoney';
+import MarketValueTable from '@/components/others/MarketValueTable';
 import useGameStore from '@/store/gameStore';
 import useRoomStore from '@/store/roomStore';
 
 const GamePage = () => {
-    const roomId = useRoomStore(state => state.roomId);
-    const playerId = usePlayerStore(state => state.playerId);
     const isLoading = usePlayerStore(state => state.isLoading);
     const turn = usePlayerStore(state => state.turn);
-    const setIsLoading = usePlayerStore(state => state.setIsLoading);
-    const setTurn = usePlayerStore(state => state.setTurn);
-    const fetchGameData = useGameStore(state => state.fetchGameData);
-
+    const players = useGameStore(state => state.players);
+    const money = useGameStore(state => state.money);
+    const marketValueList = useGameStore(state => state.marketValueList);
 
     useEffect(() => {
         (async () => {
-            console.log(roomId);
+            const roomId = useRoomStore.getState().roomId
+            const playerId = usePlayerStore.getState().playerId;
+            const setIsLoading = usePlayerStore.getState().setIsLoading;
+            const setTurn = usePlayerStore.getState().setTurn;
+            const fetchGameData = useGameStore.getState().fetchGameData;
+
             if (!roomId) return;
 
             await fetchGameData(roomId);
@@ -26,7 +30,7 @@ const GamePage = () => {
             setTurn(playerIndex);
             setIsLoading(false);
         })();
-    }, [playerId, roomId, setIsLoading, fetchGameData, setTurn])
+    }, [])
 
     if (isLoading) {
         return <div>読み込み中...</div>;
@@ -34,7 +38,9 @@ const GamePage = () => {
 
     return (
         <div> 
-            <PlayerHand cards={useGameStore.getState().players[turn].hand} />
+            <PlayerHand cards={players[turn].hand} />
+            <MarketValueTable marketValueList={marketValueList} />
+            <PossessedMoney money={money[turn]} />
         </div>
     )
 }
