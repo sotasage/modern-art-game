@@ -7,6 +7,7 @@ import PossessedMoney from '@/components/others/PossessedMoney';
 import MarketValueTable from '@/components/others/MarketValueTable';
 import NowActionedCards from '@/components/others/NowActionedCards';
 import PurchasedCards from '@/components/others/PurchasedCards';
+import MessageBoard from '@/components/others/MessageBoard';
 import useGameStore from '@/store/gameStore';
 import useRoomStore from '@/store/roomStore';
 
@@ -41,6 +42,7 @@ const GamePage = () => {
             <PossessedMoney/>
             <NowActionedCards/>
             <PurchasedCards/>
+            <MessageBoard/>
         </div>
     )
 }

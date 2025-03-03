@@ -12,12 +12,14 @@ type GameState = {
     marketValueList: MarketValue[];
     purchasedCards: Card[][];
     nowActionedCards: Card[];
+    messages: string[];
     isGameStarted: boolean;
     setPlayers: (players: Player[]) => void;
     setDeck: (deck: Card[]) => void;
     setMoney: (money: number[]) => void;
     setMarketValueList: (marketValueList: MarketValue[]) => void;
     fetchGameData: (roomId: string) => Promise<void>;
+    addMessage: (message: string) => void;
 };
 
 const useGameStore = create<GameState>()(
@@ -31,6 +33,7 @@ const useGameStore = create<GameState>()(
             marketValueList: [],
             purchasedCards: [],
             nowActionedCards: [],
+            messages: [],
             isGameStarted: false,
             setPlayers: (players) => set({players: players}),
             setDeck: (deck) => set({deck: deck}),
@@ -56,10 +59,14 @@ const useGameStore = create<GameState>()(
                     marketValueList: data.marketValueList,
                     purchasedCards: data.purchasedCards,
                     nowActionedCards: data.nowActionedCards,
+                    messages: [],
                     isGameStarted: true
                 });
                 console.log(get().players);
             },
+            addMessage: (message) => set((state) => ({
+                messages: [...state.messages, message]
+            })),
         }),
         {
             name: 'game-storage', // ストレージのキー名

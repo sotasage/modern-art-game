@@ -12,7 +12,7 @@ const PurchasedCards = () => {
     const purchasedCards = useGameStore(state => state.purchasedCards);
 
     return (
-        <Card className="fixed top-1 right-5 rounded-lg bg-gray-100 w-[1030px] h-[555px] flex flex-col items-center justify-between p-1 gap-1">
+        <Card className="fixed top-1 right-4 rounded-lg bg-gray-100 w-[1030px] h-[555px] flex flex-col items-center justify-between p-1 gap-1">
             <h1 className="text-sm font-semibold text-gray-900 text-center leading-tight">
                 購入したカード一覧
             </h1>

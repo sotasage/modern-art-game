@@ -11,7 +11,7 @@ const NowActionedCards = () => {
     const nowActionedCards = useGameStore(state => state.nowActionedCards);
 
     return (
-        <Card className="fixed bottom-4 left-5 rounded-lg bg-white w-[300px] h-[250px] flex flex-col items-center p-5">
+        <Card className="fixed bottom-3 left-5 rounded-lg bg-white w-[300px] h-[250px] flex flex-col items-center p-5">
             
             <h1 className="text-lg font-semibold text-gray-900 text-center leading-tight mb-5">
                 競売中のカード

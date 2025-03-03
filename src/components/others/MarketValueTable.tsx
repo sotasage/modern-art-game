@@ -7,7 +7,7 @@ const MarketValueTable = () => {
     const marketValueList = useGameStore(state => state.marketValueList);
 
     return (
-        <div className="fixed top-2 left-0 transform scale-90">
+        <div className="fixed top-0 left-0 transform scale-90">
         <Table className="border border-gray-300">
             <TableHeader>
             <TableRow className="bg-gray-100">
