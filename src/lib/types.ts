@@ -27,3 +27,5 @@ export type MarketValue = {
     amethyst: number | null;
 }
 
+export type Phase = "カード選択" | "競売" | "結果発表" ; 
+

@@ -82,14 +82,14 @@ const RoomPage = () => {
         }
       )
       .subscribe();
-      const subscription3 = supabase
+    const subscription3 = supabase
       .channel(`game-${roomId}-start`)
       .on('postgres_changes', 
         { 
           event: 'UPDATE', 
           schema: 'public', 
           table: 'rooms',
-        }, 
+        },
         (payload) => {
           console.log('リアルタイム更新:', payload);
           

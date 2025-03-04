@@ -4,12 +4,13 @@ import useRoomStore from '@/store/roomStore';
 import usePlayerStore from '@/store/playerStore';
 import { startGame } from '@/lib/game/gameFunctions';
 import { supabase } from '@/lib/supabase';
-import type { Card } from '@/lib/types';
+import type { Card, Phase } from '@/lib/types';
+import { sortCard } from '@/lib/game/cardFunctions';
 
 const GameStartButton = () => {
-  const roomId = useRoomStore(state => state.roomId);
+  const roomId = useRoomStore.getState().roomId;
   const members = useRoomStore(state => state.members);
-  const setIsLoading = usePlayerStore(state => state.setIsLoading);
+  const setIsLoading = usePlayerStore.getState().setIsLoading;
   const isRoomMaster = usePlayerStore(state => state.isRoomMaster);
 
   const isButtonEnabled = members.length >= 3;
@@ -24,23 +25,27 @@ const GameStartButton = () => {
   }));
   const purchasedCards: Card[][] = Array.from({ length: members.length }, () => []);
   const nowActionedCards: Card[] = [];
+  const phase: Phase = "カード選択";
 
   const handleGameStart = async () => {
     setIsLoading(true);
 
     const { updatedPlayers, updatedHands, remainingDeck } = startGame(members);
+    const newHands = updatedHands.map(hand => sortCard(hand));
+
     if (isRoomMaster) {
       const { error: gameSettingError } = await supabase
         .from("games")
         .insert({
           room_id: roomId,
           deck: remainingDeck,
-          hands: updatedHands,
+          hands: newHands,
           players: updatedPlayers,
           money: money,
           marketValueList: marketValueList,
           purchasedCards: purchasedCards,
           nowActionedCards: nowActionedCards,
+          phase: phase,
         });
       if (gameSettingError) {
           console.error("ゲーム設定エラー", gameSettingError);

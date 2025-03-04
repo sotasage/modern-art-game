@@ -8,17 +8,26 @@ import RubyCard from '@/components/cards/RubyCard';
 import SapphireCard from '@/components/cards/SapphireCard';
 import { sortCard } from '@/lib/game/cardFunctions';
 import useGameStore from '@/store/gameStore';
-import usePlayerStore from '@/store/playerStore';
 
 const PlayerHand = () => {
-    const turn = usePlayerStore.getState().turn;
+    const myTurn = useGameStore.getState().myTurn;
     const hands = useGameStore(state => state.hands);
+    const setSelectedCard = useGameStore.getState().setSelectedCard;
+    const selectedDoubleAuction = useGameStore(state => state.selectedDoubleAuction);
 
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
     const onClick = (index: number) => {
-        setSelectedCardIndex(selectedCardIndex === index ? null : index);
+        if (selectedCardIndex == index) {
+            setSelectedCardIndex(null);
+            setSelectedCard(null);
+        }
+        else {
+            setSelectedCardIndex(index);
+            setSelectedCard(hands[myTurn][index]);
+            console.log(useGameStore.getState().selectedCard);
+        }
     };
-    const hand = sortCard(hands[turn]);
+    const hand = sortCard(hands[myTurn] ?? []);
 
     const maxWidth = 850; // カードを並べる最大幅（表示範囲）
     const cardWidth = 120; // カード1枚の幅
@@ -36,17 +45,21 @@ const PlayerHand = () => {
                             // カードを少しずつずらして重ねて表示
                             const offset = (index - (hand.length - 1) / 2) * spacing;
                             const isSelected = selectedCardIndex === index;
+                            const isDisable = selectedDoubleAuction &&
+                                (selectedDoubleAuction.gem !== card.gem || card.method === "ダブルオークション")
                             
                             return (
                                 <div 
                                     key={index}
-                                    className="absolute transition-transform duration-300"
+                                    className={`absolute transition-transform duration-300
+                                        ${isDisable ? 'opacity-30 cursor-not-allowed' : ""}
+                                    `}
                                     style={{ 
                                         left: `50%`, 
                                         transform: `translateX(${offset}px) translateX(10%)`,
                                         zIndex: isSelected ? 1000 : index
                                     }}
-                                    onClick={() => onClick(index)}
+                                    onClick={() => !isDisable && onClick(index)}
                                 >
                                     <div
                                         className={`transition-transform duration-300 

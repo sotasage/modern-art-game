@@ -1,10 +1,9 @@
 import React from 'react'
 import { Card, CardContent } from '../ui/card'
-import usePlayerStore from '@/store/playerStore';
 import useGameStore from '@/store/gameStore';
 
 const PossessedMoney = () => {
-    const turn = usePlayerStore.getState().turn;
+    const turn = useGameStore.getState().myTurn;
     const money = useGameStore(state => state.money);
 
     return (

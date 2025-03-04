@@ -86,6 +86,13 @@ export function sortCard(hand: Card[]): Card[] {
         // 宝石タイプが同じ場合はオークション方法で比較
         return methodOrder[a.method] - methodOrder[b.method];
     });
+}
 
+export function discardCard(hand: Card[], discardCard: Card): Card[] {
+    const newHand = hand.filter(
+        card => !(card.gem === discardCard.gem && card.method === discardCard.method)
+    );
+
+    return newHand;
 }
   
