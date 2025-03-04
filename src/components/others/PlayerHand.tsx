@@ -56,7 +56,7 @@ const PlayerHand = () => {
                                     `}
                                     style={{ 
                                         left: `50%`, 
-                                        transform: `translateX(${offset}px) translateX(10%)`,
+                                        transform: `translateX(${offset}px) translateX(-10%)`,
                                         zIndex: isSelected ? 1000 : index
                                     }}
                                     onClick={() => !isDisable && onClick(index)}

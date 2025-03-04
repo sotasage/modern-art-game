@@ -19,7 +19,7 @@ const PlayCardButton = () => {
 
   const isButtonDisabled = selectedCard ? false : true;
 
-  const handlePlayCard = async (roomId: string) => {
+  const handlePlayCard = async () => {
     if (!selectedCard) return;
     setNewNowActionedCards([...newNowActionedCards, selectedCard]);
     discardCard(selectedCard);
@@ -32,8 +32,8 @@ const PlayCardButton = () => {
 
     setSelectedCard(null);
     setSelectedDoubleAuction(null);
-    console.log(newNowActionedCards);
-    const phase: Phase = "競売";
+    
+    const phase: Phase = selectedCard.method;
 
     const { error } = await supabase
       .from('games')
@@ -44,6 +44,7 @@ const PlayCardButton = () => {
         console.error("カードプレイエラー", error);
         return;
     }
+    setNewNowActionedCards([]);
   }
 
   return (
@@ -51,11 +52,7 @@ const PlayCardButton = () => {
       {(phase == "カード選択") && (nowTurn == myTurn) && (
         <Button
           disabled={isButtonDisabled}
-          onClick={
-            () => {
-              if (roomId) handlePlayCard(roomId)
-            }
-          }
+          onClick={handlePlayCard}
           className='fixed bottom-28 right-12 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-r-md transition'
         >
           カードを出す

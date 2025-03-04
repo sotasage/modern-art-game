@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Card, Player, MarketValue, Phase } from "@/lib/types";
+import type { Card, Player, MarketValue, Phase, publicAuction } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { discardCard } from '@/lib/game/cardFunctions';
 
@@ -20,12 +20,13 @@ type GameState = {
     isGameStarted: boolean;
     phase: Phase;
     selectedDoubleAuction: Card | null;
+    publicAuctionState: publicAuction[],
     setPlayers: (players: Player[]) => void;
     setDeck: (deck: Card[]) => void;
     setMoney: (money: number[]) => void;
     setMarketValueList: (marketValueList: MarketValue[]) => void;
     fetchGameData: (roomId: string) => Promise<void>;
-    setNowActiondCards: (nowActionedCards: Card[]) => void;
+    setNowActionedCards: (nowActionedCards: Card[]) => void;
     setNewNowActionedCards: (newNowActionedCards: Card[]) => void;
     addMessage: (message: string) => void;
     setSelectedCard: (selectedCard: Card | null) => void;
@@ -33,7 +34,10 @@ type GameState = {
     changePhase: (phase: Phase, roomId: string) => Promise<void>;
     setPhase: (phase: Phase) => void;
     setSelectedDoubleAuction: (selectedDoubleAuction: Card | null) => void;
-    discardCard: (card: Card) => void
+    discardCard: (card: Card) => void;
+    setPublicAuctionState: (publicAuctionState: publicAuction[]) => void;
+    setPurchasedCards: (purchasedCards: Card[][]) => void;
+    setNowTurn: (nowTurn: number) => void;
 };
 
 const useGameStore = create<GameState>()(
@@ -54,6 +58,7 @@ const useGameStore = create<GameState>()(
             isGameStarted: false,
             phase: "カード選択",
             selectedDoubleAuction: null,
+            publicAuctionState: [],
             setPlayers: (players) => set({players: players}),
             setDeck: (deck) => set({deck: deck}),
             setMoney: (money) => set({money: money}),
@@ -84,9 +89,10 @@ const useGameStore = create<GameState>()(
                     isGameStarted: true,
                     phase: data.phase,
                     selectedDoubleAuction: null,
+                    publicAuctionState: data.publicAuctionState
                 });
             },
-            setNowActiondCards: (nowActionedCards) => set({nowActionedCards: nowActionedCards}),
+            setNowActionedCards: (nowActionedCards) => set({nowActionedCards: nowActionedCards}),
             setNewNowActionedCards: (newNowActionedCards) => set({newNowActionedCards: newNowActionedCards}),
             addMessage: (message) => set((state) => ({
                 messages: [...state.messages, message]
@@ -109,7 +115,7 @@ const useGameStore = create<GameState>()(
             },
             setPhase: (phase) => set({phase: phase}),
             setSelectedDoubleAuction: (selectedDoubleAuction) => set({selectedDoubleAuction: selectedDoubleAuction}),
-            discardCard: (card: Card) => {
+            discardCard: (card) => {
                 const nowHands = get().hands;
                 const myTurn = get().myTurn;
                 const newHand: Card[] = discardCard(nowHands[myTurn], card);
@@ -118,6 +124,9 @@ const useGameStore = create<GameState>()(
                 );
                 set({hands: newHands});
             },
+            setPublicAuctionState: (publicAuctionState) => set({publicAuctionState: publicAuctionState}),
+            setPurchasedCards: (purchasedCards) => set({purchasedCards: purchasedCards}),
+            setNowTurn: (nowTurn) => set({nowTurn: nowTurn}),
         }),
         {
             name: 'game-storage', // ストレージのキー名

@@ -29,3 +29,10 @@ export function startGame(members: RoomMember[]): { updatedPlayers: Player[], up
     
     return { updatedPlayers, updatedHands, remainingDeck };
 }
+
+export function getNextTurn(nowTurn: number, playerNum: number): number {
+    let newTurn = nowTurn + 1;
+    if (newTurn >= playerNum) newTurn = 0;
+
+    return newTurn;
+}
