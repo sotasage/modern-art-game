@@ -15,7 +15,7 @@ import useGameStore from '@/store/gameStore';
 import useRoomStore from '@/store/roomStore';
 import { supabase } from '@/lib/supabase';
 import { getNextTurn } from '@/lib/game/gameFunctions';
-import { BidAuction, Card, OneVoiceAuction, SpecifyAuction } from '@/lib/types';
+import { BidAuction, Card, DoubleAuction, OneVoiceAuction, SpecifyAuction } from '@/lib/types';
 import { PublicAuction } from '../../../lib/types';
 
 const GamePage = () => {
@@ -66,8 +66,7 @@ const GamePage = () => {
                                 payload.new.phase === "公開競り" ||
                                 payload.new.phase === "一声" ||
                                 payload.new.phase === "入札" ||
-                                payload.new.phase === "指し値" ||
-                                payload.new.phase === "ダブルオークション"
+                                payload.new.phase === "指し値"
                             ) {
                                 addMessage(`${players[payload.new.nowTurn].name}が${payload.new.phase}カードを出しました。`);
                                 if (payload.new.phase === "公開競り" || payload.new.phase === "入札") {
@@ -76,6 +75,9 @@ const GamePage = () => {
                                 else if (payload.new.phase === "指し値") {
                                     addMessage(`${players[payload.new.nowTurn].name}は売値を決定してください。`)
                                 }
+                            }
+                            else if (payload.new.phase === "ダブルオークション") {
+                                addMessage(`${players[payload.new.nowTurn].name}が${payload.new.phase}カードを単体で出しました。`);
                             }
                         }
                         if (JSON.stringify(payload.new.publicAuctionState) !== JSON.stringify(payload.old.publicAuctionState)) {
@@ -423,6 +425,87 @@ const GamePage = () => {
                                     else {
                                         addMessage(`${players[prePlayer].name}はパスしました。`)
                                         addMessage(`${players[specifyAuctionState.nowPlayer].name}は落札するかまたはパスしてください。`);
+                                    }
+                                }
+                            }
+                        }
+                        if (JSON.stringify(payload.new.doubleAuctionState) !== JSON.stringify(payload.old.doubleAuctionState)) {
+                            const setDoubleAuctionState = useGameStore.getState().setDoubleAuctionState;
+                            setDoubleAuctionState(payload.new.doubleAuctionState);
+
+                            if (payload.new.phase === "ダブルオークション") {
+                                const prePlayer = payload.old.doubleAuctionState.nowPlayer;
+                                const players = useGameStore.getState().players;
+                                const doubleAuctionState = payload.new.doubleAuctionState;
+                                const nowTurn = payload.new.nowTurn;
+
+                                if (prePlayer === -1) {
+                                    addMessage(`${players[doubleAuctionState.nowPlayer].name}は同じ色のカードを出すかまたはパスしてください。`);
+                                }
+                                else {
+                                    // 誰かがカードを出した場合
+                                    if (doubleAuctionState.selectCard !== null) {
+                                        const nowActionedCards = useGameStore.getState().nowActionedCards;
+                        
+                                        const newNowActionedCards: Card[] = [...nowActionedCards, doubleAuctionState.selectCard]
+                                        const newDoubleAuctionState: DoubleAuction = {
+                                            nowPlayer: -1, daCard: null, selectCard: null,
+                                        }
+                                        const newPhase = doubleAuctionState.selectCard.method;
+                                        const newTurn = prePlayer;
+
+                                        const { error } = await supabase
+                                            .from('games')
+                                            .update({
+                                                    nowActionedCards: newNowActionedCards,
+                                                    doubleAuctionState: newDoubleAuctionState,
+                                                    phase: newPhase,
+                                                    nowTurn: newTurn
+                                            })
+                                            .eq("room_id", roomId)
+                                            .select()
+                                            .single();
+                                        if (error) {
+                                            console.error("ダブルオークション終了エラー", error);
+                                            return;
+                                        }
+                                    }
+                                    // 誰もカードを出さなかった場合
+                                    else if (doubleAuctionState.nowPlayer === nowTurn) {
+                                        addMessage(`全てのプレイヤーがパスしたため、${players[nowTurn].name}がカードを無料で受け取ります。`)
+
+                                        const nowPurchasedCards = useGameStore.getState().purchasedCards;
+                        
+                                        const newPurchasdCards = nowPurchasedCards.map((cards, index) => 
+                                            index === nowTurn ? [...cards, doubleAuctionState.daCard] : cards
+                                        );
+                                        const newNowActionedCards: Card[] = [];
+                                        const newDoubleAuctionState: DoubleAuction = {
+                                            nowPlayer: -1, daCard: null, selectCard: null,
+                                        }
+                                        const newPhase = "カード選択";
+                                        const newTurn = getNextTurn(nowTurn, players.length);
+
+                                        const { error } = await supabase
+                                            .from('games')
+                                            .update({
+                                                    purchasedCards: newPurchasdCards,
+                                                    nowActionedCards: newNowActionedCards,
+                                                    doubleAuctionState: newDoubleAuctionState,
+                                                    phase: newPhase,
+                                                    nowTurn: newTurn
+                                            })
+                                            .eq("room_id", roomId)
+                                            .select()
+                                            .single();
+                                        if (error) {
+                                            console.error("ダブルオークション終了エラー", error);
+                                            return;
+                                        }
+                                    }
+                                    else {
+                                        addMessage(`${players[prePlayer].name}はパスしました。`)
+                                        addMessage(`${players[doubleAuctionState.nowPlayer].name}は同じ色のカードを出すかまたはパスしてください。`);
                                     }
                                 }
                             }

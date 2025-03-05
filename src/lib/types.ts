@@ -51,3 +51,9 @@ export type SpecifyAuction = {
     isPurchased: boolean;
 }
 
+export type DoubleAuction = {
+    nowPlayer: number;
+    daCard: Card | null;
+    selectCard: Card | null;
+}
+

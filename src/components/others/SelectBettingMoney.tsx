@@ -86,6 +86,9 @@ const SelectBettingMoney = () => {
         }
         if (phase === "一声") {
             if (oneVoiceAuctionState.maxBetSize >= betAmount) return;
+
+            isCardVisible = false;
+
             const newOneVoiceAuctionState: OneVoiceAuction = {
                 nowPlayer: getNextTurn(myTurn, players.length),
                 maxPlayer: myTurn,
@@ -101,10 +104,10 @@ const SelectBettingMoney = () => {
                 console.error("一声エラー", error);
                 return;
             }
-
-            isCardVisible = false;
         }
         if (phase === "入札") {
+            isCardVisible = false;
+
             const newState: BidAuction = { isDecided: true, betSize: betAmount };
             const newBidAuctionState = bidAuctionState.map((state, index) => 
                 index === myTurn ? newState : state
@@ -119,10 +122,10 @@ const SelectBettingMoney = () => {
                 console.error("入札エラー", error);
                 return;
             }
-
-            isCardVisible = false;
         }
         if (phase === "指し値") {
+            isCardVisible = false;
+
             const newSpecifyAuctionState: SpecifyAuction = {
                 nowPlayer: getNextTurn(myTurn, players.length),
                 betSize: betAmount,
@@ -138,13 +141,13 @@ const SelectBettingMoney = () => {
                 console.error("指し値エラー", error);
                 return;
             }
-
-            isCardVisible = false;
         }
     }
 
     const finishBet = async () => {
         if (phase === "公開競り") {
+            isCardVisible = false;
+            
             const newState: PublicAuction = { betSize: 0, isFinished: true };
             const newPublicAuctionState = publicAuctionState.map((state, index) => 
                 index === myTurn ? newState : state
@@ -159,10 +162,10 @@ const SelectBettingMoney = () => {
                 console.error("公開競りエラー", error);
                 return;
             }
-
-            isCardVisible = false;
         }
         if (phase === "一声") {
+            isCardVisible = false;
+
             const newOneVoiceAuctionState: OneVoiceAuction = {
                 nowPlayer: getNextTurn(myTurn, players.length),
                 maxPlayer: oneVoiceAuctionState.maxPlayer,
@@ -178,8 +181,6 @@ const SelectBettingMoney = () => {
                 console.error("一声エラー", error);
                 return;
             }
-
-            isCardVisible = false;
         }
     }
 

@@ -14,6 +14,7 @@ const PlayerHand = () => {
     const hands = useGameStore(state => state.hands);
     const setSelectedCard = useGameStore.getState().setSelectedCard;
     const selectedDoubleAuction = useGameStore(state => state.selectedDoubleAuction);
+    const doubleAuctionState = useGameStore(state => state.doubleAuctionState);
 
     const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
     const onClick = (index: number) => {
@@ -45,8 +46,10 @@ const PlayerHand = () => {
                             // カードを少しずつずらして重ねて表示
                             const offset = (index - (hand.length - 1) / 2) * spacing;
                             const isSelected = selectedCardIndex === index;
-                            const isDisable = selectedDoubleAuction &&
-                                (selectedDoubleAuction.gem !== card.gem || card.method === "ダブルオークション")
+                            const isDisable = (selectedDoubleAuction &&
+                                (selectedDoubleAuction.gem !== card.gem || card.method === "ダブルオークション")) || 
+                                ((doubleAuctionState.daCard && doubleAuctionState.nowPlayer === myTurn) &&
+                                (doubleAuctionState.daCard.gem !== card.gem || card.method === "ダブルオークション"))
                             
                             return (
                                 <div 

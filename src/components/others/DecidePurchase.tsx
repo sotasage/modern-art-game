@@ -19,6 +19,8 @@ const DecidePurchase = () => {
     const purchase = async () => {
         if (phase !== "指し値" || specifyAuctionState.nowPlayer !== myTurn) return;
 
+        isCardVisible = false;
+
         const newSpecifyAuctionState: SpecifyAuction = {
             nowPlayer: getNextTurn(myTurn, players.length),
             betSize: specifyAuctionState.betSize,
@@ -34,12 +36,12 @@ const DecidePurchase = () => {
             console.error("指し値エラー", error);
             return;
         }
-
-        isCardVisible = false;
     }
 
     const pass = async () => {
         if (phase !== "指し値" || specifyAuctionState.nowPlayer !== myTurn) return;
+
+        isCardVisible = false;
 
         const newSpecifyAuctionState: SpecifyAuction = {
             nowPlayer: getNextTurn(myTurn, players.length),
@@ -56,8 +58,6 @@ const DecidePurchase = () => {
             console.error("指し値エラー", error);
             return;
         }
-
-        isCardVisible = false;
     }
 
     return (
