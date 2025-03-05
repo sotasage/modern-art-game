@@ -29,8 +29,14 @@ export type MarketValue = {
 
 export type Phase = "カード選択" | "公開競り" | "一声" | "入札" | "指し値" | "ダブルオークション" | "結果発表" ; 
 
-export type publicAuction = {
+export type PublicAuction = {
     betSize: number;
     isFinished: boolean;
+}
+
+export type OneVoiceAuction = {
+    nowPlayer: number;
+    maxPlayer: number;
+    maxBetSize: number;
 }
 

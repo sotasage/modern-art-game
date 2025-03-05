@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 import { Slider } from '@/components/ui/slider'
 import { Button } from '../ui/button'
 import useGameStore from '@/store/gameStore'
-import type { publicAuction } from '@/lib/types'
+import type { PublicAuction } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
 import useRoomStore from '@/store/roomStore'
 
@@ -28,7 +28,7 @@ const SelectBettingMoney = () => {
 
         minBet = maxBet + 1000;
         
-        if (betAmount < minBet || (maxBet === 0 && minBet !== betAmount)) {
+        if (betAmount < minBet) {
             setBetAmount(minBet);
         }
 
@@ -38,6 +38,9 @@ const SelectBettingMoney = () => {
             isFinishButtomDisabled = true;
         }
     }
+    if (phase === "カード選択" || phase === "ダブルオークション") {
+        if (betAmount !== 0) setBetAmount(0);
+    }
 
     const handleBetChange = (values: number[]) => {
         setBetAmount(values[0]);
@@ -46,7 +49,7 @@ const SelectBettingMoney = () => {
     const dicideBetSize = async () => {
         if (phase === "公開競り") {
             if (publicAuctionState[myTurn].betSize >= betAmount) return;
-            const newState: publicAuction = { betSize: betAmount, isFinished: false };
+            const newState: PublicAuction = { betSize: betAmount, isFinished: false };
             const newPublicAuctionState = publicAuctionState.map((state, index) => 
                 index === myTurn ? newState : state
             );
@@ -65,7 +68,7 @@ const SelectBettingMoney = () => {
 
     const finishBet = async () => {
         if (phase === "公開競り") {
-            const newState: publicAuction = { betSize: 0, isFinished: true };
+            const newState: PublicAuction = { betSize: 0, isFinished: true };
             const newPublicAuctionState = publicAuctionState.map((state, index) => 
                 index === myTurn ? newState : state
             );

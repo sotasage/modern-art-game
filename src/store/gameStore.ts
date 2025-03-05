@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Card, Player, MarketValue, Phase, publicAuction } from "@/lib/types";
+import type { Card, Player, MarketValue, Phase, PublicAuction, OneVoiceAuction } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { discardCard } from '@/lib/game/cardFunctions';
 
@@ -20,7 +20,8 @@ type GameState = {
     isGameStarted: boolean;
     phase: Phase;
     selectedDoubleAuction: Card | null;
-    publicAuctionState: publicAuction[],
+    publicAuctionState: PublicAuction[],
+    oneVoiceAuctionState: OneVoiceAuction,
     setPlayers: (players: Player[]) => void;
     setDeck: (deck: Card[]) => void;
     setMoney: (money: number[]) => void;
@@ -35,9 +36,10 @@ type GameState = {
     setPhase: (phase: Phase) => void;
     setSelectedDoubleAuction: (selectedDoubleAuction: Card | null) => void;
     discardCard: (card: Card) => void;
-    setPublicAuctionState: (publicAuctionState: publicAuction[]) => void;
+    setPublicAuctionState: (publicAuctionState: PublicAuction[]) => void;
     setPurchasedCards: (purchasedCards: Card[][]) => void;
     setNowTurn: (nowTurn: number) => void;
+    setOneVoiceAuctionState: (state: OneVoiceAuction) => void;
 };
 
 const useGameStore = create<GameState>()(
@@ -59,6 +61,7 @@ const useGameStore = create<GameState>()(
             phase: "カード選択",
             selectedDoubleAuction: null,
             publicAuctionState: [],
+            oneVoiceAuctionState: {nowPlayer: -1, maxPlayer: -1, maxBetSize: -1},
             setPlayers: (players) => set({players: players}),
             setDeck: (deck) => set({deck: deck}),
             setMoney: (money) => set({money: money}),
@@ -89,7 +92,8 @@ const useGameStore = create<GameState>()(
                     isGameStarted: true,
                     phase: data.phase,
                     selectedDoubleAuction: null,
-                    publicAuctionState: data.publicAuctionState
+                    publicAuctionState: data.publicAuctionState,
+                    oneVoiceAuctionState: data.oneVoiceAuctionState,
                 });
             },
             setNowActionedCards: (nowActionedCards) => set({nowActionedCards: nowActionedCards}),
@@ -127,6 +131,7 @@ const useGameStore = create<GameState>()(
             setPublicAuctionState: (publicAuctionState) => set({publicAuctionState: publicAuctionState}),
             setPurchasedCards: (purchasedCards) => set({purchasedCards: purchasedCards}),
             setNowTurn: (nowTurn) => set({nowTurn: nowTurn}),
+            setOneVoiceAuctionState: (state) => set({oneVoiceAuctionState: state}),
         }),
         {
             name: 'game-storage', // ストレージのキー名

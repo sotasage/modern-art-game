@@ -15,7 +15,7 @@ import useRoomStore from '@/store/roomStore';
 import { supabase } from '@/lib/supabase';
 import { getNextTurn } from '@/lib/game/gameFunctions';
 import { Card } from '@/lib/types';
-import { publicAuction } from '../../../lib/types';
+import { PublicAuction } from '../../../lib/types';
 
 const GamePage = () => {
     const isLoading = usePlayerStore(state => state.isLoading);
@@ -36,7 +36,7 @@ const GamePage = () => {
             setMyTurn(playerIndex);
             setIsLoading(false);
             addMessage("ゲーム開始！");
-            addMessage(`${useGameStore.getState().players[0].name}はカードを選んでください。`)
+            addMessage(`${useGameStore.getState().players[0].name}はカードを選択してください。`)
 
             const subscription = supabase
                 .channel(`game-${roomId}-updates`)
@@ -59,7 +59,7 @@ const GamePage = () => {
                             const players = useGameStore.getState().players;
 
                             if (payload.new.phase === "カード選択") {
-                                addMessage(`${players[payload.new.nowTurn].name}はカードを選んでください。`);
+                                addMessage(`${players[payload.new.nowTurn].name}はカードを選択してください。`);
                             }
                             if (payload.new.phase === "公開競り") {
                                 addMessage(`${players[payload.new.nowTurn].name}がカードを出しました。\n賭け金を選択してください。`);
@@ -89,8 +89,8 @@ const GamePage = () => {
 
                                 // 誰かが降りた場合
                                 if (
-                                    JSON.stringify(payload.new.publicAuctionState.map((state: publicAuction) => state.isFinished)) !==
-                                    JSON.stringify(payload.old.publicAuctionState.map((state: publicAuction) => state.isFinished))
+                                    JSON.stringify(payload.new.publicAuctionState.map((state: PublicAuction) => state.isFinished)) !==
+                                    JSON.stringify(payload.old.publicAuctionState.map((state: PublicAuction) => state.isFinished))
                                 ) {
                                     let falledIndex = -1;
                                     for (let i = 0; i < players.length; i++) {
