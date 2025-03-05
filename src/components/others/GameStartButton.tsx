@@ -4,7 +4,7 @@ import useRoomStore from '@/store/roomStore';
 import usePlayerStore from '@/store/playerStore';
 import { startGame } from '@/lib/game/gameFunctions';
 import { supabase } from '@/lib/supabase';
-import type { Card, OneVoiceAuction, Phase, PublicAuction } from '@/lib/types';
+import type { BidAuction, Card, OneVoiceAuction, Phase, PublicAuction } from '@/lib/types';
 import { sortCard } from '@/lib/game/cardFunctions';
 
 const GameStartButton = () => {
@@ -31,6 +31,10 @@ const GameStartButton = () => {
     isFinished: false,
   }));
   const oneVoiceAuctionState: OneVoiceAuction = { nowPlayer: -1, maxPlayer: -1, maxBetSize: -1 };
+  const bidAuctionState:  BidAuction[] = Array.from({ length: members.length }, () => ({
+    isDecided: false,
+    betSize: 0,
+  }));
 
   const handleGameStart = async () => {
     setIsLoading(true);
@@ -53,6 +57,7 @@ const GameStartButton = () => {
           phase: phase,
           publicAuctionState: publicAuctionState,
           oneVoiceAuctionState: oneVoiceAuctionState,
+          bidAuctionState: bidAuctionState,
         });
       if (gameSettingError) {
           console.error("ゲーム設定エラー", gameSettingError);

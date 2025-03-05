@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 import { Slider } from '@/components/ui/slider'
 import { Button } from '../ui/button'
 import useGameStore from '@/store/gameStore'
-import type { OneVoiceAuction, PublicAuction } from '@/lib/types'
+import type { BidAuction, OneVoiceAuction, PublicAuction } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
 import useRoomStore from '@/store/roomStore'
 import { getNextTurn } from '@/lib/game/gameFunctions'
@@ -16,12 +16,13 @@ const SelectBettingMoney = () => {
     const oneVoiceAuctionState = useGameStore(state => state.oneVoiceAuctionState);
     const roomId = useRoomStore.getState().roomId;
     const players = useGameStore.getState().players;
+    const bidAuctionState = useGameStore(state => state.bidAuctionState);
 
     const [betAmount, setBetAmount] = useState(0);
 
     let isCardVisible = false;
     let isFinishButtomDisabled = false;
-    let minBet = 1000;
+    let minBet = 0;
 
     if (phase === "公開競り") {
         if (!publicAuctionState[myTurn].isFinished) isCardVisible = true;
@@ -48,6 +49,9 @@ const SelectBettingMoney = () => {
         if (betAmount < minBet) {
             setBetAmount(minBet);
         }
+    }
+    if (phase === "入札") {
+        if (!bidAuctionState[myTurn].isDecided) isCardVisible = true;
     }
     if (phase === "カード選択" || phase === "ダブルオークション") {
         if (betAmount !== 0) setBetAmount(0);
@@ -92,6 +96,26 @@ const SelectBettingMoney = () => {
                 console.error("一声エラー", error);
                 return;
             }
+
+            isCardVisible = false;
+        }
+        if (phase === "入札") {
+            const newState: BidAuction = { isDecided: true, betSize: betAmount };
+            const newBidAuctionState = bidAuctionState.map((state, index) => 
+                index === myTurn ? newState : state
+            );
+
+            const { error } = await supabase
+                .from('games')
+                .update({ bidAuctionState: newBidAuctionState })
+                .eq("room_id", roomId);
+                
+            if (error) {
+                console.error("入札エラー", error);
+                return;
+            }
+
+            isCardVisible = false;
         }
     }
 

@@ -14,7 +14,7 @@ import useGameStore from '@/store/gameStore';
 import useRoomStore from '@/store/roomStore';
 import { supabase } from '@/lib/supabase';
 import { getNextTurn } from '@/lib/game/gameFunctions';
-import { Card, OneVoiceAuction } from '@/lib/types';
+import { BidAuction, Card, OneVoiceAuction } from '@/lib/types';
 import { PublicAuction } from '../../../lib/types';
 
 const GamePage = () => {
@@ -61,10 +61,12 @@ const GamePage = () => {
                             if (payload.new.phase === "カード選択") {
                                 addMessage(`${players[payload.new.nowTurn].name}はカードを選択してください。`);
                             }
-                            if (payload.new.phase === "公開競り") {
+                            if (payload.new.phase === "公開競り" || payload.new.phase === "入札") {
                                 addMessage(`${players[payload.new.nowTurn].name}がカードを出しました。\n金額を決定してください。`);
                             }
-                            
+                            if (payload.new.phase === "一声") {
+                                addMessage(`${players[payload.new.nowTurn].name}がカードを出しました。`);
+                            }
                         }
                         if (JSON.stringify(payload.new.publicAuctionState) !== JSON.stringify(payload.old.publicAuctionState)) {
                             const setPublicAuctionState = useGameStore.getState().setPublicAuctionState;
@@ -226,7 +228,88 @@ const GamePage = () => {
                                 // 最後のターン以外の場合
                                 else {
                                     const nowPlayer = oneVoiceAuctionState.nowPlayer;
-                                    addMessage(`${players[nowPlayer].name}は金額を上げるかまたはパスしてください。`)
+                                    addMessage(`${players[nowPlayer].name}は金額を吊り上げるかまたはパスしてください。`)
+                                }
+                            }
+                        }
+                        if (JSON.stringify(payload.new.bidAuctionState) !== JSON.stringify(payload.old.bidAuctionState)) {
+                            const setBidAuctionState = useGameStore.getState().setBidAuctionState;
+                            setBidAuctionState(payload.new.bidAuctionState);
+
+                            if (payload.new.phase === "入札") {
+                                const players = useGameStore.getState().players;
+                                const bidAuctionState = payload.new.bidAuctionState;
+                                const nowTurn = payload.new.nowTurn;
+
+                                let decideIndex = -1;
+                                let isFinished = true;
+                                for (let i = 0; i < players.length; i++) {
+                                    if (
+                                        bidAuctionState[i].isDecided !==
+                                        payload.old.bidAuctionState[i].isDecided
+                                    ) decideIndex = i;
+                                    if (!bidAuctionState[i].isDecided) isFinished = false;
+                                }
+
+                                if (decideIndex !== -1) addMessage(`${players[decideIndex].name}が金額を決定しました。`);
+
+                                if (isFinished) {
+                                    // 最高金額とそのプレイヤーを求める 同じ金額だった場合は競売人に近い方から時計回りに優先（競売人が最優先）
+                                    let maxPlayer = nowTurn;
+                                    let maxBetSize = 0;
+                                    for (let i = 0; i < players.length; i++) {
+                                        let index = nowTurn + i;
+                                        if (index >= players.length) index -= players.length;
+
+                                        if (bidAuctionState[index].betSize > maxBetSize) {
+                                            maxPlayer = index;
+                                            maxBetSize = bidAuctionState[index].betSize;
+                                        }
+                                    }
+
+                                    addMessage("全員の入札額を発表します。");
+                                    players.map((player, index) => {
+                                        addMessage(`${player.name}: $${bidAuctionState[index].betSize}`);
+                                    })
+                                    addMessage(`よって、${players[maxPlayer].name}が$${maxBetSize}で落札しました。`)
+
+                                    const nowMoney = useGameStore.getState().money;
+                                    const nowPurchasedCards = useGameStore.getState().purchasedCards;
+                                    const nowActionedCards = useGameStore.getState().nowActionedCards;
+                    
+                                    const newMoney = nowMoney.map((money, index) =>
+                                        index === maxPlayer ? money - maxBetSize : index === nowTurn ? money + maxBetSize : money
+                                    );
+                                    const newPurchasdCards = nowPurchasedCards.map((cards, index) => 
+                                        index === maxPlayer ? [...cards, ...nowActionedCards] : cards
+                                    );
+                                    const newNowActionedCards: Card[] = [];
+                                    const newBidAuctionState: BidAuction[] = Array.from({ length: players.length }, () => ({
+                                        isDecided: false,
+                                        betSize: 0,
+                                    }));
+                                    const newPhase = "カード選択";
+                                    const newTurn = getNextTurn(nowTurn, players.length);
+
+                                    const { error } = await supabase
+                                        .from('games')
+                                        .update({
+                                                money: newMoney,
+                                                purchasedCards: newPurchasdCards,
+                                                nowActionedCards: newNowActionedCards,
+                                                bidAuctionState: newBidAuctionState,
+                                                phase: newPhase,
+                                                nowTurn: newTurn
+                                        })
+                                        .eq("room_id", roomId)
+                                        .select()
+                                        .single();
+                                    if (error) {
+                                        console.error("公開競り終了エラー", error);
+                                        return;
+                                    }
+
+                                    addMessage("競売が終了しました。");
                                 }
                             }
                         }

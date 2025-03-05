@@ -40,3 +40,8 @@ export type OneVoiceAuction = {
     maxBetSize: number;
 }
 
+export type BidAuction = {
+    isDecided: boolean;
+    betSize: number;
+}
+
