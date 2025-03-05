@@ -31,7 +31,7 @@ const PlayCardButton = () => {
       return;
     }
 
-    if (selectedCard.method === "公開競り") {
+    if (selectedCard.method === "公開競り" || selectedCard.method === "入札" || selectedCard.method === "指し値") {
       const { error } = await supabase
         .from('games')
         .update({nowActionedCards: useGameStore.getState().newNowActionedCards, phase: selectedCard.method})
@@ -55,26 +55,6 @@ const PlayCardButton = () => {
           nowActionedCards: useGameStore.getState().newNowActionedCards,
           phase: selectedCard.method,
           oneVoiceAuctionState: newOneVoiceAuctionState,
-        })
-        .eq("room_id", roomId);
-        
-      if (error) {
-          console.error("カードプレイエラー", error);
-          return;
-      }
-    }
-    else if (selectedCard.method === "入札") {
-      const newBidAuctionState = Array.from({ length: useGameStore.getState().players.length }, () => ({
-        isDecided: false,
-        betSize: 0,
-      }));
-
-      const { error } = await supabase
-        .from('games')
-        .update({
-          nowActionedCards: useGameStore.getState().newNowActionedCards,
-          phase: selectedCard.method,
-          bidAuctionState: newBidAuctionState,
         })
         .eq("room_id", roomId);
         

@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 import { Slider } from '@/components/ui/slider'
 import { Button } from '../ui/button'
 import useGameStore from '@/store/gameStore'
-import type { BidAuction, OneVoiceAuction, PublicAuction } from '@/lib/types'
+import type { BidAuction, OneVoiceAuction, PublicAuction, SpecifyAuction } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
 import useRoomStore from '@/store/roomStore'
 import { getNextTurn } from '@/lib/game/gameFunctions'
@@ -17,6 +17,8 @@ const SelectBettingMoney = () => {
     const roomId = useRoomStore.getState().roomId;
     const players = useGameStore.getState().players;
     const bidAuctionState = useGameStore(state => state.bidAuctionState);
+    const specifyAuctionState = useGameStore(state => state.specifyAuctionState);
+    const nowTurn = useGameStore(state => state.nowTurn);
 
     const [betAmount, setBetAmount] = useState(0);
 
@@ -52,6 +54,9 @@ const SelectBettingMoney = () => {
     }
     if (phase === "入札") {
         if (!bidAuctionState[myTurn].isDecided) isCardVisible = true;
+    }
+    if (phase === "指し値") {
+        if (nowTurn === myTurn && specifyAuctionState.betSize === -1) isCardVisible = true;
     }
     if (phase === "カード選択" || phase === "ダブルオークション") {
         if (betAmount !== 0) setBetAmount(0);
@@ -117,6 +122,25 @@ const SelectBettingMoney = () => {
 
             isCardVisible = false;
         }
+        if (phase === "指し値") {
+            const newSpecifyAuctionState: SpecifyAuction = {
+                nowPlayer: getNextTurn(myTurn, players.length),
+                betSize: betAmount,
+                isPurchased: false,
+            }
+
+            const { error } = await supabase
+                .from('games')
+                .update({ specifyAuctionState: newSpecifyAuctionState })
+                .eq("room_id", roomId);
+                
+            if (error) {
+                console.error("指し値エラー", error);
+                return;
+            }
+
+            isCardVisible = false;
+        }
     }
 
     const finishBet = async () => {
@@ -163,7 +187,7 @@ const SelectBettingMoney = () => {
         <>
             {isCardVisible && (
                 <Card className="fixed bottom-16 right-4 w-52 h-32 p-1 rounded-lg bg-white flex flex-col justify-between">
-                    <h2 className="text-center font-semibold text-gray-900 mb-1"> 賭け金を選択</h2>
+                    <h2 className="text-center font-semibold text-gray-900 mb-1"> 金額を選択</h2>
                     <Slider
                         value={[betAmount]}
                         min={minBet}

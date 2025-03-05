@@ -45,3 +45,9 @@ export type BidAuction = {
     betSize: number;
 }
 
+export type SpecifyAuction = {
+    nowPlayer: number;
+    betSize: number;
+    isPurchased: boolean;
+}
+
