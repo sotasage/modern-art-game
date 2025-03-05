@@ -14,7 +14,7 @@ import useGameStore from '@/store/gameStore';
 import useRoomStore from '@/store/roomStore';
 import { supabase } from '@/lib/supabase';
 import { getNextTurn } from '@/lib/game/gameFunctions';
-import { Card } from '@/lib/types';
+import { Card, OneVoiceAuction } from '@/lib/types';
 import { PublicAuction } from '../../../lib/types';
 
 const GamePage = () => {
@@ -62,7 +62,7 @@ const GamePage = () => {
                                 addMessage(`${players[payload.new.nowTurn].name}はカードを選択してください。`);
                             }
                             if (payload.new.phase === "公開競り") {
-                                addMessage(`${players[payload.new.nowTurn].name}がカードを出しました。\n賭け金を選択してください。`);
+                                addMessage(`${players[payload.new.nowTurn].name}がカードを出しました。\n金額を決定してください。`);
                             }
                             
                         }
@@ -70,7 +70,7 @@ const GamePage = () => {
                             const setPublicAuctionState = useGameStore.getState().setPublicAuctionState;
                             setPublicAuctionState(payload.new.publicAuctionState);
 
-                            if (useGameStore.getState().phase === "公開競り") {
+                            if (payload.new.phase === "公開競り") {
                                 // 最大金額を賭けているプレイヤーと降りたプレイヤーの人数を記録
                                 const publicAuctionState = useGameStore.getState().publicAuctionState;
                                 const players = useGameStore.getState().players;
@@ -106,7 +106,7 @@ const GamePage = () => {
                                 }
                                 // 誰かが賭け金を吊り上げた場合
                                 else {
-                                    addMessage(`${players[maxBetPlayerIndex].name}が賭け金を$${maxBetSize}に吊り上げました。`);
+                                    addMessage(`${players[maxBetPlayerIndex].name}が金額を$${maxBetSize}に吊り上げました。`);
                                 }
                                 // 残りのプレイヤーが1人の場合は終了
                                 if (finishCount >= players.length - 1) {
@@ -162,6 +162,73 @@ const GamePage = () => {
                         if (JSON.stringify(payload.new.nowTurn) !== JSON.stringify(payload.old.nowTurn)) {
                             const setNowTurn = useGameStore.getState().setNowTurn;
                             setNowTurn(payload.new.nowTurn);
+                        }
+                        if (JSON.stringify(payload.new.oneVoiceAuctionState) !== JSON.stringify(payload.old.oneVoiceAuctionState)) {
+                            const setOneVoiceAuctionState = useGameStore.getState().setOneVoiceAuctionState;
+                            setOneVoiceAuctionState(payload.new.oneVoiceAuctionState);
+
+                            if (payload.new.phase === "一声") {
+                                const oneVoiceAuctionState = useGameStore.getState().oneVoiceAuctionState;
+                                const players = useGameStore.getState().players;
+                                const maxPlayer = oneVoiceAuctionState.maxPlayer;
+                                const maxBetSize = oneVoiceAuctionState.maxBetSize;
+                                const prePlayer = payload.old.oneVoiceAuctionState.nowPlayer;
+                                const nowTurn = useGameStore.getState().nowTurn;
+
+                                // 最初のターン以外の場合
+                                if (prePlayer !== -1) {
+                                    if (prePlayer === maxPlayer && maxBetSize !== 0) {
+                                        addMessage(`${players[prePlayer].name}が金額を$${oneVoiceAuctionState.maxBetSize}に吊り上げました。`);
+                                    }
+                                    else {
+                                        addMessage(`${players[prePlayer].name}はパスしました。`)
+                                    }
+                                }
+                                // 最後のターンの場合
+                                if (prePlayer === nowTurn) {
+                                    const nowMoney = useGameStore.getState().money;
+                                    const nowPurchasedCards = useGameStore.getState().purchasedCards;
+                                    const nowActionedCards = useGameStore.getState().nowActionedCards;
+                    
+                                    const newMoney = nowMoney.map((money, index) =>
+                                        index === maxPlayer ? money - maxBetSize : index === nowTurn ? money + maxBetSize : money
+                                    );
+                                    const newPurchasdCards = nowPurchasedCards.map((cards, index) => 
+                                        index === maxPlayer ? [...cards, ...nowActionedCards] : cards
+                                    );
+                                    const newNowActionedCards: Card[] = [];
+                                    const newOneVoiceAuctionState: OneVoiceAuction = {
+                                        nowPlayer: -1, maxPlayer: -1, maxBetSize: -1,
+                                    }
+                                    const newPhase = "カード選択";
+                                    const newTurn = getNextTurn(nowTurn, players.length);
+
+                                    const { error } = await supabase
+                                        .from('games')
+                                        .update({
+                                                money: newMoney,
+                                                purchasedCards: newPurchasdCards,
+                                                nowActionedCards: newNowActionedCards,
+                                                oneVoiceAuctionState: newOneVoiceAuctionState,
+                                                phase: newPhase,
+                                                nowTurn: newTurn
+                                        })
+                                        .eq("room_id", roomId)
+                                        .select()
+                                        .single();
+                                    if (error) {
+                                        console.error("公開競り終了エラー", error);
+                                        return;
+                                    }
+
+                                    addMessage("競売が終了しました。");
+                                }
+                                // 最後のターン以外の場合
+                                else {
+                                    const nowPlayer = oneVoiceAuctionState.nowPlayer;
+                                    addMessage(`${players[nowPlayer].name}は金額を上げるかまたはパスしてください。`)
+                                }
+                            }
                         }
                     }
                 )

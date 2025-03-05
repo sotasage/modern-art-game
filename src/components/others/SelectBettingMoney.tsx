@@ -3,16 +3,19 @@ import { Card } from '@/components/ui/card'
 import { Slider } from '@/components/ui/slider'
 import { Button } from '../ui/button'
 import useGameStore from '@/store/gameStore'
-import type { PublicAuction } from '@/lib/types'
+import type { OneVoiceAuction, PublicAuction } from '@/lib/types'
 import { supabase } from '@/lib/supabase'
 import useRoomStore from '@/store/roomStore'
+import { getNextTurn } from '@/lib/game/gameFunctions'
 
 const SelectBettingMoney = () => {
     const money = useGameStore(state => state.money);
     const myTurn = useGameStore.getState().myTurn;
     const phase = useGameStore(state => state.phase);
     const publicAuctionState = useGameStore(state => state.publicAuctionState);
+    const oneVoiceAuctionState = useGameStore(state => state.oneVoiceAuctionState);
     const roomId = useRoomStore.getState().roomId;
+    const players = useGameStore.getState().players;
 
     const [betAmount, setBetAmount] = useState(0);
 
@@ -25,7 +28,6 @@ const SelectBettingMoney = () => {
 
         const betSizes = publicAuctionState.map(state => state.betSize);
         const maxBet = Math.max(...betSizes);
-
         minBet = maxBet + 1000;
         
         if (betAmount < minBet) {
@@ -36,6 +38,15 @@ const SelectBettingMoney = () => {
         const maxIndex = betSizes.indexOf(Math.max(...betSizes));
         if (maxIndex === myTurn && publicAuctionState[maxIndex].betSize != 0) {
             isFinishButtomDisabled = true;
+        }
+    }
+    if (phase === "一声") {
+        if (oneVoiceAuctionState.nowPlayer === myTurn) isCardVisible = true;
+        const maxBet = oneVoiceAuctionState.maxBetSize;
+        minBet = maxBet + 1000;
+
+        if (betAmount < minBet) {
+            setBetAmount(minBet);
         }
     }
     if (phase === "カード選択" || phase === "ダブルオークション") {
@@ -64,6 +75,24 @@ const SelectBettingMoney = () => {
                 return;
             }
         }
+        if (phase === "一声") {
+            if (oneVoiceAuctionState.maxBetSize >= betAmount) return;
+            const newOneVoiceAuctionState: OneVoiceAuction = {
+                nowPlayer: getNextTurn(myTurn, players.length),
+                maxPlayer: myTurn,
+                maxBetSize: betAmount,
+            };
+
+            const { error } = await supabase
+                .from('games')
+                .update({ oneVoiceAuctionState: newOneVoiceAuctionState })
+                .eq("room_id", roomId);
+                
+            if (error) {
+                console.error("一声エラー", error);
+                return;
+            }
+        }
     }
 
     const finishBet = async () => {
@@ -80,6 +109,25 @@ const SelectBettingMoney = () => {
                 
             if (error) {
                 console.error("公開競りエラー", error);
+                return;
+            }
+
+            isCardVisible = false;
+        }
+        if (phase === "一声") {
+            const newOneVoiceAuctionState: OneVoiceAuction = {
+                nowPlayer: getNextTurn(myTurn, players.length),
+                maxPlayer: oneVoiceAuctionState.maxPlayer,
+                maxBetSize: oneVoiceAuctionState.maxBetSize,
+            }
+
+            const { error } = await supabase
+                .from('games')
+                .update({ oneVoiceAuctionState: newOneVoiceAuctionState })
+                .eq("room_id", roomId);
+                
+            if (error) {
+                console.error("一声エラー", error);
                 return;
             }
 
@@ -104,16 +152,16 @@ const SelectBettingMoney = () => {
                         <Button
                             className=' bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-r-md transition'
                             onClick={dicideBetSize}
-                            disabled={minBet >= money[myTurn]}
+                            disabled={minBet > money[myTurn]}
                         >
                             決定
                         </Button>
-                        {phase ==="公開競り" && <Button
+                        {(phase === "公開競り" || phase === "一声") && <Button
                             className=' bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-r-md transition'
                             onClick={finishBet}
                             disabled={isFinishButtomDisabled}
                         >
-                            終了
+                            {phase === "公開競り" ? "降りる" : "パス"}
                         </Button>}
                     </div>
                 </Card>

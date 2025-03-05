@@ -3,7 +3,8 @@ import { Button } from '../ui/button'
 import useGameStore from '@/store/gameStore';
 import useRoomStore from '@/store/roomStore';
 import { supabase } from '@/lib/supabase';
-import type { Phase } from '@/lib/types';
+import { OneVoiceAuction } from '@/lib/types';
+import { getNextTurn } from '@/lib/game/gameFunctions';
 
 const PlayCardButton = () => {
   const selectedCard = useGameStore(state => state.selectedCard);
@@ -30,20 +31,40 @@ const PlayCardButton = () => {
       return;
     }
 
+    if (selectedCard.method === "公開競り") {
+      const { error } = await supabase
+        .from('games')
+        .update({nowActionedCards: useGameStore.getState().newNowActionedCards, phase: selectedCard.method})
+        .eq("room_id", roomId);
+        
+      if (error) {
+          console.error("カードプレイエラー", error);
+          return;
+      }
+    }
+    else if (selectedCard.method === "一声") {
+      const newOneVoiceAuctionState: OneVoiceAuction = {
+        nowPlayer: getNextTurn(myTurn, useGameStore.getState().players.length),
+        maxPlayer: myTurn,
+        maxBetSize: 0,
+      };
+      const { error } = await supabase
+        .from('games')
+        .update({
+          nowActionedCards: useGameStore.getState().newNowActionedCards,
+          phase: selectedCard.method,
+          oneVoiceAuctionState: newOneVoiceAuctionState,
+        })
+        .eq("room_id", roomId);
+        
+      if (error) {
+          console.error("カードプレイエラー", error);
+          return;
+      }
+    }
+
     setSelectedCard(null);
     setSelectedDoubleAuction(null);
-    
-    const phase: Phase = selectedCard.method;
-
-    const { error } = await supabase
-      .from('games')
-      .update({ nowActionedCards: useGameStore.getState().newNowActionedCards, phase: phase})
-      .eq("room_id", roomId);
-        
-    if (error) {
-        console.error("カードプレイエラー", error);
-        return;
-    }
     setNewNowActionedCards([]);
   }
 
