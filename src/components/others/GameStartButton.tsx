@@ -63,6 +63,7 @@ const GameStartButton = () => {
           bidAuctionState: bidAuctionState,
           specifyAuctionState: specifyAuctionState,
           doubleAuctionState: doubleAuctionState,
+          round: 0,
         });
       if (gameSettingError) {
           console.error("ゲーム設定エラー", gameSettingError);

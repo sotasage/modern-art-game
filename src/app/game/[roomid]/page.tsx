@@ -14,9 +14,10 @@ import DecidePurchase from '@/components/others/DecidePurchase';
 import useGameStore from '@/store/gameStore';
 import useRoomStore from '@/store/roomStore';
 import { supabase } from '@/lib/supabase';
-import { getNextTurn } from '@/lib/game/gameFunctions';
-import { BidAuction, Card, DoubleAuction, OneVoiceAuction, SpecifyAuction } from '@/lib/types';
+import { getGemsValue, getNextTurn, getPlayerEarnings, getTopThreeGems } from '@/lib/game/gameFunctions';
+import { BidAuction, Card, DoubleAuction, Gem, MarketValue, OneVoiceAuction, SpecifyAuction } from '@/lib/types';
 import { PublicAuction } from '../../../lib/types';
+import { dealCards, sortCard } from '@/lib/game/cardFunctions';
 
 const GamePage = () => {
     const isLoading = usePlayerStore(state => state.isLoading);
@@ -51,6 +52,155 @@ const GamePage = () => {
                     }, 
                     async (payload) => {
                         if (JSON.stringify(payload.new.nowActionedCards) !== JSON.stringify(payload.old.nowActionedCards)) {
+                            if (payload.new.phase === "公開競り" ||
+                                payload.new.phase === "一声" ||
+                                payload.new.phase === "入札" ||
+                                payload.new.phase === "指し値" ||
+                                payload.new.phase === "ダブルオークション"
+                            ) {
+                                const gemCounts = useGameStore.getState().gemCounts;
+                                const nowActionedCards: Card[] = payload.new.nowActionedCards;
+
+                                nowActionedCards.forEach(card => {
+                                    gemCounts[card.gem]++;
+                                });
+    
+                                // 同じ宝石が5枚以上場に出たらラウンド終了
+                                let isRoundChange = false;
+                                (Object.keys(gemCounts) as Gem[]).forEach(gem => {
+                                    if (gemCounts[gem] >= 5) {
+                                        isRoundChange = true;
+                                    }
+                                });
+    
+                                if (isRoundChange) {
+                                    const players = useGameStore.getState().players;
+                                    const nowTurn = payload.new.nowTurn;
+                                    const round = payload.new.round;
+                                    const marketValueList: MarketValue[] = payload.new.marketValueList
+                                    const money = payload.new.money;
+                                    const purchasedCards = payload.new.purchasedCards;
+                                    const hands = payload.new.hands;
+                                    const deck = payload.new.deck;
+                                    const setGemCounts = useGameStore.getState().setGemCounts;
+
+                                    if (nowActionedCards.length === 2) {
+                                        addMessage(`${players[nowTurn].name}が
+                                                    ${nowActionedCards[0].gem}の${nowActionedCards[0].method}と
+                                                    ${nowActionedCards[1].gem}の${nowActionedCards[1].method}を
+                                                    出してラウンドを終わらせました。`
+                                        )
+                                    }
+                                    else {
+                                        addMessage(`${players[nowTurn].name}が
+                                            ${nowActionedCards[0].gem}の${nowActionedCards[0].method}を
+                                            出してラウンドを終わらせました。`
+                                        )
+                                    }
+
+                                    // 市場価値の確定
+                                    const topThreeGems = getTopThreeGems(gemCounts);
+                                    const newMarketValue: MarketValue = {
+                                        diamond: 0,
+                                        emerald: 0,
+                                        sapphire: 0,
+                                        ruby: 0,
+                                        amethyst: 0
+                                    }
+                                    const values = [30000, 20000, 10000];
+                                    topThreeGems.forEach((gem, index) => {
+                                        newMarketValue[gem] = values[index];
+                                    });
+                                    const newMarketValueList = marketValueList.map((value, index) => 
+                                        index === round ? newMarketValue : value
+                                    );
+
+                                    // お金の処理
+                                    const gemsValue = getGemsValue(newMarketValueList, round);
+                                    const playerEarnings = getPlayerEarnings(gemsValue, purchasedCards);
+
+                                    console.log(playerEarnings);
+
+                                    const newMoney: number[] = money;
+
+                                    playerEarnings.forEach((earning, index) => {
+                                        newMoney[index] += earning;
+                                    });
+
+                                    // カード配布
+                                    let number: number = 0;
+                                    if (round === 0) {
+                                        if (players.length === 3) number = 6;
+                                        else if (players.length === 4) number = 4;
+                                        else if (players.length === 5) number = 3;
+                                    }
+                                    else if (round === 1) {
+                                        if (players.length === 3) number = 6;
+                                        else if (players.length === 4) number = 4;
+                                        else if (players.length === 5) number = 3;
+                                    }
+                                    
+                                    const { updatedHands, remainingDeck } = dealCards(deck, hands, number);
+                                    const newHands = updatedHands.map(hand => sortCard(hand));
+
+                                    // 新しいターンは終わらせたプレイヤーの次のプレイヤーから
+                                    const newTurn = getNextTurn(nowTurn, players.length);
+                                    const newRound = round + 1;
+                                    const newPurchasedCards = [[], [], [], []];
+                                    const newPublicAuctionState: PublicAuction[] = Array.from({ length: players.length }, () => ({
+                                        betSize: 0,
+                                        isFinished: false,
+                                    }));
+                                    const newOneVoiceAuctionState: OneVoiceAuction = { nowPlayer: -1, maxPlayer: -1, maxBetSize: -1 };
+                                    const newBidAuctionState:  BidAuction[] = Array.from({ length: players.length }, () => ({
+                                        isDecided: false,
+                                        betSize: 0,
+                                    }));
+                                    const newSpecifyAuctionState: SpecifyAuction = { nowPlayer: -1, betSize: -1, isPurchased: false };
+                                    const newDoubleAuctionState: DoubleAuction = { nowPlayer: -1, daCard: null, selectCard: null };
+
+                                    setGemCounts({ diamond: 0, emerald: 0, sapphire: 0, ruby: 0, amethyst: 0 });
+
+                                    addMessage("このラウンドで稼いだ額");
+                                    players.map((player, index) => {
+                                        addMessage(`${player.name}: $${playerEarnings[index]}`);
+                                    });
+
+                                    // dbにデータ送信 deck hands money nowTurn marketValueList purchasedCards nowActionedCards phase round
+                                    // doubleAuctionState specifyAuctionState bidAuctionState oneVoiceAuctionState publicAuctionState
+
+                                    const { error } = await supabase
+                                        .from('games')
+                                        .update({
+                                            deck: remainingDeck,
+                                            hands: newHands,
+                                            money: newMoney,
+                                            nowTurn: newTurn,
+                                            marketValueList: newMarketValueList,
+                                            purchasedCards: newPurchasedCards,
+                                            nowActionedCards: [],
+                                            phase: "カード選択",
+                                            round: newRound,
+                                            publicAuctionState: newPublicAuctionState,
+                                            oneVoiceAuctionState: newOneVoiceAuctionState,
+                                            bidAuctionState: newBidAuctionState,
+                                            specifyAuctionState: newSpecifyAuctionState,
+                                            doubleAuctionState: newDoubleAuctionState,
+                                        })
+                                        .eq("room_id", roomId);
+                                    
+                                    if (error) {
+                                        console.error("ラウンド変更エラー", error);
+                                        return;
+                                    }
+
+                                    addMessage(`ラウンド${round + 1}終了`);
+                                    addMessage(`ラウンド${newRound + 1}開始！`);
+
+                                    return;
+                                }
+                            }
+
                             const setNowActionedCards = useGameStore.getState().setNowActionedCards;
                             setNowActionedCards(payload.new.nowActionedCards);
                         }
@@ -79,6 +229,14 @@ const GamePage = () => {
                             else if (payload.new.phase === "ダブルオークション") {
                                 addMessage(`${players[payload.new.nowTurn].name}が${payload.new.phase}カードを単体で出しました。`);
                             }
+                        }
+                        if (JSON.stringify(payload.new.hands) !== JSON.stringify(payload.old.hands)) {
+                            const setHands = useGameStore.getState().setHands;
+                            setHands(payload.new.hands);
+                        }
+                        if (JSON.stringify(payload.new.marketValueList) !== JSON.stringify(payload.old.marketValueList)) {
+                            const setMarketValueList = useGameStore.getState().setMarketValueList;
+                            setMarketValueList(payload.new.marketValueList);
                         }
                         if (JSON.stringify(payload.new.publicAuctionState) !== JSON.stringify(payload.old.publicAuctionState)) {
                             const setPublicAuctionState = useGameStore.getState().setPublicAuctionState;
@@ -509,6 +667,10 @@ const GamePage = () => {
                                     }
                                 }
                             }
+                        }
+                        if (JSON.stringify(payload.new.round) !== JSON.stringify(payload.old.round)) {
+                            const setRound = useGameStore.getState().setRound;
+                            setRound(payload.new.round);
                         }
                     }
                 )

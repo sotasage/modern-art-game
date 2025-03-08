@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Card, Player, MarketValue, Phase, PublicAuction, OneVoiceAuction, BidAuction, SpecifyAuction, DoubleAuction } from "@/lib/types";
+import type { Card, Player, MarketValue, Phase, PublicAuction, OneVoiceAuction, BidAuction, SpecifyAuction, DoubleAuction, Gem } from "@/lib/types";
 import { supabase } from "@/lib/supabase";
 import { discardCard } from '@/lib/game/cardFunctions';
 
@@ -16,6 +16,7 @@ type GameState = {
     newNowActionedCards: Card[];
     messages: string[];
     selectedCard: Card | null;
+    selectedCardIndex: number | null;
     myTurn: number;
     isGameStarted: boolean;
     phase: Phase;
@@ -25,6 +26,8 @@ type GameState = {
     bidAuctionState: BidAuction[],
     specifyAuctionState: SpecifyAuction,
     doubleAuctionState: DoubleAuction,
+    round: number,
+    gemCounts: Record<Gem, number>,
     setPlayers: (players: Player[]) => void;
     setDeck: (deck: Card[]) => void;
     setMoney: (money: number[]) => void;
@@ -34,11 +37,12 @@ type GameState = {
     setNewNowActionedCards: (newNowActionedCards: Card[]) => void;
     addMessage: (message: string) => void;
     setSelectedCard: (selectedCard: Card | null) => void;
+    setSelectedCardIndex: (index: number | null) => void;
     setMyTurn: (myTurn: number) => void;
     changePhase: (phase: Phase, roomId: string) => Promise<void>;
     setPhase: (phase: Phase) => void;
     setSelectedDoubleAuction: (selectedDoubleAuction: Card | null) => void;
-    discardCard: (card: Card) => void;
+    discardCard: (cardIndex: number) => void;
     setPublicAuctionState: (publicAuctionState: PublicAuction[]) => void;
     setPurchasedCards: (purchasedCards: Card[][]) => void;
     setNowTurn: (nowTurn: number) => void;
@@ -46,6 +50,9 @@ type GameState = {
     setBidAuctionState: (state: BidAuction[]) => void;
     setSpecifyAuctionState: (state: SpecifyAuction) => void;
     setDoubleAuctionState: (state: DoubleAuction) => void;
+    setRound: (round: number) => void;
+    setGemCounts: (counts: Record<Gem, number>) => void;
+    setHands: (hands: Card[][]) => void;
 };
 
 const useGameStore = create<GameState>()(
@@ -63,6 +70,7 @@ const useGameStore = create<GameState>()(
             messages: [],
             myTurn: -1,
             selectedCard: null,
+            selectedCardIndex: null,
             isGameStarted: false,
             phase: "カード選択",
             selectedDoubleAuction: null,
@@ -71,6 +79,8 @@ const useGameStore = create<GameState>()(
             bidAuctionState: [],
             specifyAuctionState: { nowPlayer: -1, betSize: -1, isPurchased: false },
             doubleAuctionState: { nowPlayer: -1, daCard: null, selectCard: null },
+            round: 0,
+            gemCounts: { diamond: 0, emerald: 0, sapphire: 0, ruby: 0, amethyst: 0 },
             setPlayers: (players) => set({players: players}),
             setDeck: (deck) => set({deck: deck}),
             setMoney: (money) => set({money: money}),
@@ -106,6 +116,8 @@ const useGameStore = create<GameState>()(
                     bidAuctionState: data.bidAuctionState,
                     specifyAuctionState: data.specifyAuctionState,
                     doubleAuctionState: data.doubleAuctionState,
+                    round: data.round,
+                    gemCounts: { diamond: 0, emerald: 0, sapphire: 0, ruby: 0, amethyst: 0 },
                 });
             },
             setNowActionedCards: (nowActionedCards) => set({nowActionedCards: nowActionedCards}),
@@ -114,6 +126,7 @@ const useGameStore = create<GameState>()(
                 messages: [...state.messages, message]
             })),
             setSelectedCard: (selectedCard) => set({selectedCard: selectedCard}),
+            setSelectedCardIndex: (index) => set({selectedCardIndex: index}),
             setMyTurn: (myTurn) => set({myTurn: myTurn}),
             changePhase: async (phase, roomId) => {
                 if (phase === get().phase) return;
@@ -131,10 +144,10 @@ const useGameStore = create<GameState>()(
             },
             setPhase: (phase) => set({phase: phase}),
             setSelectedDoubleAuction: (selectedDoubleAuction) => set({selectedDoubleAuction: selectedDoubleAuction}),
-            discardCard: (card) => {
+            discardCard: (cardIndex) => {
                 const nowHands = get().hands;
                 const myTurn = get().myTurn;
-                const newHand: Card[] = discardCard(nowHands[myTurn], card);
+                const newHand: Card[] = discardCard(nowHands[myTurn], cardIndex);
                 const newHands = nowHands.map((hand, index) => 
                     index === myTurn ? newHand : hand
                 );
@@ -147,6 +160,9 @@ const useGameStore = create<GameState>()(
             setBidAuctionState: (state) => set({bidAuctionState: state}),
             setSpecifyAuctionState: (state) => set({specifyAuctionState: state}),
             setDoubleAuctionState: (state) => set({doubleAuctionState: state}),
+            setRound: (round) => set({round: round}),
+            setGemCounts: (counts) => set({gemCounts: counts}),
+            setHands: (hands) => set({hands: hands}),
         }),
         {
             name: 'game-storage', // ストレージのキー名

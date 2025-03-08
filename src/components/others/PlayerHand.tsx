@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react';
+import React from 'react';
 import AmethystCard from '@/components/cards/AmethystCard';
 import DiamondCard from '@/components/cards/DiamondCard';
 import EmeraldCard from '@/components/cards/EmeraldCard';
@@ -13,10 +13,11 @@ const PlayerHand = () => {
     const myTurn = useGameStore.getState().myTurn;
     const hands = useGameStore(state => state.hands);
     const setSelectedCard = useGameStore.getState().setSelectedCard;
+    const selectedCardIndex = useGameStore(state => state.selectedCardIndex);
+    const setSelectedCardIndex = useGameStore(state => state.setSelectedCardIndex);
     const selectedDoubleAuction = useGameStore(state => state.selectedDoubleAuction);
     const doubleAuctionState = useGameStore(state => state.doubleAuctionState);
 
-    const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
     const onClick = (index: number) => {
         if (selectedCardIndex == index) {
             setSelectedCardIndex(null);
@@ -25,7 +26,6 @@ const PlayerHand = () => {
         else {
             setSelectedCardIndex(index);
             setSelectedCard(hands[myTurn][index]);
-            console.log(useGameStore.getState().selectedCard);
         }
     };
     const hand = sortCard(hands[myTurn] ?? []);

@@ -88,10 +88,8 @@ export function sortCard(hand: Card[]): Card[] {
     });
 }
 
-export function discardCard(hand: Card[], discardCard: Card): Card[] {
-    const newHand = hand.filter(
-        card => !(card.gem === discardCard.gem && card.method === discardCard.method)
-    );
+export function discardCard(hand: Card[], discardCardIndex: number): Card[] {
+    const newHand = hand.filter((_, index) => index !== discardCardIndex);
 
     return newHand;
 }

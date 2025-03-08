@@ -20,6 +20,8 @@ const PlayCardButton = () => {
   const discardCard = useGameStore.getState().discardCard;
   const players = useGameStore.getState().players;
   const doubleAuctionState = useGameStore(state => state.doubleAuctionState);
+  const selectedCardIndex = useGameStore(state => state.selectedCardIndex);
+  const setSelectedCardIndex = useGameStore.getState().setSelectedCardIndex;
 
   const isButtonDisabled = selectedCard ? false : true;
   let isButtonVisible = (phase === "カード選択" && nowTurn === myTurn) || 
@@ -27,22 +29,26 @@ const PlayCardButton = () => {
 
   const handlePlayCard = async () => {
     if (phase === "カード選択") {
-      if (!selectedCard) return;
+      if (!selectedCard || !selectedCardIndex) return;
       setNewNowActionedCards([...newNowActionedCards, selectedCard]);
-      discardCard(selectedCard);
+      discardCard(selectedCardIndex);
 
       if (selectedCard.method === "ダブルオークション") {
         setSelectedDoubleAuction(selectedCard);
         setSelectedCard(null);
+        setSelectedCardIndex(null);
+
         return;
       }
 
       isButtonVisible = false;
 
       if (selectedCard.method === "公開競り" || selectedCard.method === "入札" || selectedCard.method === "指し値") {
+        const hands = useGameStore.getState().hands;
+
         const { error } = await supabase
           .from('games')
-          .update({nowActionedCards: useGameStore.getState().newNowActionedCards, phase: selectedCard.method})
+          .update({nowActionedCards: useGameStore.getState().newNowActionedCards, phase: selectedCard.method, hands: hands})
           .eq("room_id", roomId);
           
         if (error) {
@@ -51,8 +57,6 @@ const PlayCardButton = () => {
         }
       }
       else if (selectedCard.method === "一声") {
-        isButtonVisible = false;
-
         const newOneVoiceAuctionState: OneVoiceAuction = {
           nowPlayer: getNextTurn(myTurn, useGameStore.getState().players.length),
           maxPlayer: myTurn,
@@ -64,6 +68,7 @@ const PlayCardButton = () => {
           .update({
             nowActionedCards: useGameStore.getState().newNowActionedCards,
             phase: selectedCard.method,
+            hands: useGameStore.getState().hands,
             oneVoiceAuctionState: newOneVoiceAuctionState,
           })
           .eq("room_id", roomId);
@@ -75,15 +80,16 @@ const PlayCardButton = () => {
       }
 
       setSelectedCard(null);
+      setSelectedCardIndex(null);
       setSelectedDoubleAuction(null);
       setNewNowActionedCards([]);
     }
     else if (phase === "ダブルオークション") {
-      if (!selectedCard) return;
+      if (!selectedCard || !selectedCardIndex) return;
 
       isButtonVisible = false;
 
-      discardCard(selectedCard);
+      discardCard(selectedCardIndex);
 
       const newDoubleAuctionState: DoubleAuction = {
         nowPlayer: getNextTurn(myTurn, players.length),
@@ -93,7 +99,7 @@ const PlayCardButton = () => {
 
       const { error } = await supabase
         .from('games')
-        .update({doubleAuctionState: newDoubleAuctionState,})
+        .update({hands: useGameStore.getState().hands,  doubleAuctionState: newDoubleAuctionState,})
         .eq("room_id", roomId);
         
       if (error) {
@@ -102,6 +108,7 @@ const PlayCardButton = () => {
       }
 
       setSelectedCard(null);
+      setSelectedCardIndex(null);
     }
   }
 
@@ -122,6 +129,7 @@ const PlayCardButton = () => {
         .update({
           nowActionedCards: useGameStore.getState().newNowActionedCards,
           phase: "ダブルオークション",
+          hands: useGameStore.getState().hands,
           doubleAuctionState: newDoubleAuctionState,
         })
         .eq("room_id", roomId);

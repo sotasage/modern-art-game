@@ -23,11 +23,11 @@ const MarketValueTable = () => {
             {marketValueList.map((market, index) => (
                 <TableRow key={index}>
                 <TableCell className="text-center">{index + 1}R</TableCell>
-                <TableCell className="text-center">{market.diamond !== null ? `¥${market.diamond.toLocaleString()}` : "-"}</TableCell>
-                <TableCell className="text-center">{market.emerald !== null ? `¥${market.emerald.toLocaleString()}` : "-"}</TableCell>
-                <TableCell className="text-center">{market.sapphire !== null ? `¥${market.sapphire.toLocaleString()}` : "-"}</TableCell>
-                <TableCell className="text-center">{market.ruby !== null ? `¥${market.ruby.toLocaleString()}` : "-"}</TableCell>
-                <TableCell className="text-center">{market.amethyst !== null ? `¥${market.amethyst.toLocaleString()}` : "-"}</TableCell>
+                <TableCell className="text-center">{market.diamond !== null ? `$${market.diamond.toLocaleString()}` : "-"}</TableCell>
+                <TableCell className="text-center">{market.emerald !== null ? `$${market.emerald.toLocaleString()}` : "-"}</TableCell>
+                <TableCell className="text-center">{market.sapphire !== null ? `$${market.sapphire.toLocaleString()}` : "-"}</TableCell>
+                <TableCell className="text-center">{market.ruby !== null ? `$${market.ruby.toLocaleString()}` : "-"}</TableCell>
+                <TableCell className="text-center">{market.amethyst !== null ? `$${market.amethyst.toLocaleString()}` : "-"}</TableCell>
                 </TableRow>
             ))}
             </TableBody>
