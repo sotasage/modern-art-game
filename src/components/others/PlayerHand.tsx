@@ -27,6 +27,7 @@ const PlayerHand = () => {
             setSelectedCardIndex(index);
             setSelectedCard(hands[myTurn][index]);
         }
+        console.log(useGameStore.getState().selectedCard);
     };
     const hand = sortCard(hands[myTurn] ?? []);
 

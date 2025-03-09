@@ -18,9 +18,12 @@ import { getGemsValue, getNextTurn, getPlayerEarnings, getTopThreeGems } from '@
 import { BidAuction, Card, DoubleAuction, Gem, MarketValue, OneVoiceAuction, SpecifyAuction } from '@/lib/types';
 import { PublicAuction } from '../../../lib/types';
 import { dealCards, sortCard } from '@/lib/game/cardFunctions';
+import Result from '@/components/others/Result';
+import { useRouter } from "next/navigation";
 
 const GamePage = () => {
     const isLoading = usePlayerStore(state => state.isLoading);
+    const router = useRouter();
 
     useEffect(() => {
         (async () => {
@@ -40,7 +43,7 @@ const GamePage = () => {
             addMessage("ゲーム開始！");
             addMessage(`${useGameStore.getState().players[0].name}はカードを選択してください。`)
 
-            const subscription = supabase
+            const subscription1 = supabase
                 .channel(`game-${roomId}-updates`)
                 .on(
                     'postgres_changes', 
@@ -51,6 +54,18 @@ const GamePage = () => {
                         filter: `room_id=eq.${roomId}`
                     }, 
                     async (payload) => {
+                        if (JSON.stringify(payload.new.round) !== JSON.stringify(payload.old.round)) {
+                            const setRound = useGameStore.getState().setRound;
+                            setRound(payload.new.round);
+
+                            if (payload.new.round === 4) {
+                                const setNowTurn = useGameStore.getState().setNowTurn;
+                                addMessage("ゲーム終了");
+                                setNowTurn(-1);
+
+                                return;
+                            }
+                        }
                         if (JSON.stringify(payload.new.nowActionedCards) !== JSON.stringify(payload.old.nowActionedCards)) {
                             if (payload.new.phase === "公開競り" ||
                                 payload.new.phase === "一声" ||
@@ -146,7 +161,7 @@ const GamePage = () => {
                                     // 新しいターンは終わらせたプレイヤーの次のプレイヤーから
                                     const newTurn = getNextTurn(nowTurn, players.length);
                                     const newRound = round + 1;
-                                    const newPurchasedCards = [[], [], [], []];
+                                    const newPurchasedCards = Array.from({ length: players.length }, () => []);
                                     const newPublicAuctionState: PublicAuction[] = Array.from({ length: players.length }, () => ({
                                         betSize: 0,
                                         isFinished: false,
@@ -195,7 +210,40 @@ const GamePage = () => {
                                     }
 
                                     addMessage(`ラウンド${round + 1}終了`);
-                                    addMessage(`ラウンド${newRound + 1}開始！`);
+                                    if (round != 3) {
+                                        addMessage(`ラウンド${newRound + 1}開始！`);
+                                    }
+
+                                    // 最後にreturnしている影響でStoreが更新されないことがあるので更新しておく
+                                    const setDeck = useGameStore.getState().setDeck;
+                                    const setHands = useGameStore.getState().setHands;
+                                    const setMoney = useGameStore.getState().setMoney;
+                                    const setNowTurn = useGameStore.getState().setNowTurn;
+                                    const setMarketValueList = useGameStore.getState().setMarketValueList;
+                                    const setPurchasedCards = useGameStore.getState().setPurchasedCards;
+                                    const setNowActionedCards = useGameStore.getState().setNowActionedCards;
+                                    const setPhase = useGameStore.getState().setPhase;
+                                    const setRound = useGameStore.getState().setRound;
+                                    const setPublicAuctionState = useGameStore.getState().setPublicAuctionState;
+                                    const setOneVoiceAuctionState = useGameStore.getState().setOneVoiceAuctionState;
+                                    const setBidAuctionState = useGameStore.getState().setBidAuctionState;
+                                    const setSpecifyAuctionState = useGameStore.getState().setSpecifyAuctionState;
+                                    const setDoubleAuctionState = useGameStore.getState().setDoubleAuctionState;
+
+                                    setDeck(remainingDeck);
+                                    setHands(newHands);
+                                    setMoney(newMoney);
+                                    setNowTurn(newTurn);
+                                    setMarketValueList(newMarketValueList);
+                                    setPurchasedCards(newPurchasedCards);
+                                    setNowActionedCards([]);
+                                    setPhase("カード選択");
+                                    setRound(newRound);
+                                    setPublicAuctionState(newPublicAuctionState);
+                                    setOneVoiceAuctionState(newOneVoiceAuctionState);
+                                    setBidAuctionState(newBidAuctionState);
+                                    setSpecifyAuctionState(newSpecifyAuctionState);
+                                    setDoubleAuctionState(newDoubleAuctionState);
 
                                     return;
                                 }
@@ -241,6 +289,8 @@ const GamePage = () => {
                         if (JSON.stringify(payload.new.publicAuctionState) !== JSON.stringify(payload.old.publicAuctionState)) {
                             const setPublicAuctionState = useGameStore.getState().setPublicAuctionState;
                             setPublicAuctionState(payload.new.publicAuctionState);
+
+                            console.log(useGameStore.getState().publicAuctionState);
 
                             if (payload.new.phase === "公開競り") {
                                 // 最大金額を賭けているプレイヤーと降りたプレイヤーの人数を記録
@@ -326,6 +376,10 @@ const GamePage = () => {
                         if (JSON.stringify(payload.new.money) !== JSON.stringify(payload.old.money)) {
                             const setMoney = useGameStore.getState().setMoney;
                             setMoney(payload.new.money);
+
+                            console.log(useGameStore.getState().money);
+                            console.log(payload.new.doubleAuctionState);
+                            console.log(payload.old.doubleAuctionState);
                         }
                         if (JSON.stringify(payload.new.purchasedCards) !== JSON.stringify(payload.old.purchasedCards)) {
                             const setPurchasedCards = useGameStore.getState().setPurchasedCards;
@@ -338,6 +392,8 @@ const GamePage = () => {
                         if (JSON.stringify(payload.new.oneVoiceAuctionState) !== JSON.stringify(payload.old.oneVoiceAuctionState)) {
                             const setOneVoiceAuctionState = useGameStore.getState().setOneVoiceAuctionState;
                             setOneVoiceAuctionState(payload.new.oneVoiceAuctionState);
+
+                            console.log(useGameStore.getState().oneVoiceAuctionState);
 
                             if (payload.new.phase === "一声") {
                                 const oneVoiceAuctionState = useGameStore.getState().oneVoiceAuctionState;
@@ -668,19 +724,33 @@ const GamePage = () => {
                                 }
                             }
                         }
-                        if (JSON.stringify(payload.new.round) !== JSON.stringify(payload.old.round)) {
-                            const setRound = useGameStore.getState().setRound;
-                            setRound(payload.new.round);
-                        }
                     }
                 )
                 .subscribe();
+            const subscription2 = supabase
+                .channel(`game-${roomId}-start`)
+                .on('postgres_changes', 
+                { 
+                    event: 'UPDATE', 
+                    schema: 'public', 
+                    table: 'rooms',
+                },
+                (payload) => {
+                    if (payload.new.status === "waiting") {
+                        setIsLoading(true);
+                        router.push(`/room/${roomId}`);
+                    }
+                }
+                )
+                .subscribe();
+
             // クリーンアップ関数
             return () => {
-                supabase.removeChannel(subscription);
+                supabase.removeChannel(subscription1);
+                supabase.removeChannel(subscription2);
             };
         })();
-    }, [])
+    }, [router])
 
     if (isLoading) {
         return <div>読み込み中...</div>;
@@ -697,6 +767,7 @@ const GamePage = () => {
             <PlayCardButton/>
             <SelectBettingMoney/>
             <DecidePurchase/>
+            <Result/>
         </div>
     )
 }

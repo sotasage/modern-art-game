@@ -108,6 +108,7 @@ const useGameStore = create<GameState>()(
                     newNowActionedCards: [],
                     messages: [],
                     selectedCard: null,
+                    selectedCardIndex: null,
                     isGameStarted: true,
                     phase: data.phase,
                     selectedDoubleAuction: null,

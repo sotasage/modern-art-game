@@ -29,7 +29,7 @@ const PlayCardButton = () => {
 
   const handlePlayCard = async () => {
     if (phase === "カード選択") {
-      if (!selectedCard || !selectedCardIndex) return;
+      if (!selectedCard || selectedCardIndex === null ) return;
       setNewNowActionedCards([...newNowActionedCards, selectedCard]);
       discardCard(selectedCardIndex);
 
@@ -85,7 +85,7 @@ const PlayCardButton = () => {
       setNewNowActionedCards([]);
     }
     else if (phase === "ダブルオークション") {
-      if (!selectedCard || !selectedCardIndex) return;
+      if (!selectedCard || selectedCardIndex === null) return;
 
       isButtonVisible = false;
 
