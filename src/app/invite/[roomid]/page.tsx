@@ -2,9 +2,7 @@ import InputUserName from '@/components/others/InputUserName';
 import { supabase } from '@/lib/supabase';
 
 type paramsProp = {
-  params: {
-    roomid: string;
-  };
+  params: Promise<{roomid: string}>;
 }
 
 const InvitePage = async ({ params }: paramsProp) => {
