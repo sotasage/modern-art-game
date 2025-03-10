@@ -68,7 +68,8 @@ const SelectBettingMoney = () => {
 
     const dicideBetSize = async () => {
         if (phase === "公開競り") {
-            if (publicAuctionState[myTurn].betSize >= betAmount) return;
+            const maxValue = Math.max(...publicAuctionState.map(obj => obj.betSize));
+            if (maxValue >= betAmount) return;
             const newState: PublicAuction = { betSize: betAmount, isFinished: false };
             const newPublicAuctionState = publicAuctionState.map((state, index) => 
                 index === myTurn ? newState : state
