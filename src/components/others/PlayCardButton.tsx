@@ -52,8 +52,8 @@ const PlayCardButton = () => {
           .eq("room_id", roomId);
           
         if (error) {
-            console.error("カードプレイエラー", error);
-            return;
+          console.error("カードプレイエラー", error);
+          return;
         }
       }
       else if (selectedCard.method === "一声") {

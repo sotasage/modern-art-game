@@ -434,12 +434,12 @@ const GamePage = () => {
                                     const { error } = await supabase
                                         .from('games')
                                         .update({
-                                                money: newMoney,
-                                                purchasedCards: newPurchasdCards,
-                                                nowActionedCards: newNowActionedCards,
-                                                oneVoiceAuctionState: newOneVoiceAuctionState,
-                                                phase: newPhase,
-                                                nowTurn: newTurn
+                                            money: newMoney,
+                                            purchasedCards: newPurchasdCards,
+                                            nowActionedCards: newNowActionedCards,
+                                            oneVoiceAuctionState: newOneVoiceAuctionState,
+                                            phase: newPhase,
+                                            nowTurn: newTurn
                                         })
                                         .eq("room_id", roomId)
                                         .select()
@@ -668,20 +668,48 @@ const GamePage = () => {
                                         const newPhase = doubleAuctionState.selectCard.method;
                                         const newTurn = prePlayer;
 
-                                        const { error } = await supabase
-                                            .from('games')
-                                            .update({
-                                                    nowActionedCards: newNowActionedCards,
-                                                    doubleAuctionState: newDoubleAuctionState,
-                                                    phase: newPhase,
-                                                    nowTurn: newTurn
-                                            })
-                                            .eq("room_id", roomId)
-                                            .select()
-                                            .single();
-                                        if (error) {
-                                            console.error("ダブルオークション終了エラー", error);
-                                            return;
+                                        const nowDoubleAuctionState: DoubleAuction = payload.new.doubleAuctionState;
+
+                                        if (nowDoubleAuctionState.selectCard?.method === "一声") {
+                                            const newOneVoiceAuctionState: OneVoiceAuction = {
+                                                nowPlayer: getNextTurn(prePlayer, useGameStore.getState().players.length),
+                                                maxPlayer: prePlayer,
+                                                maxBetSize: 0,
+                                            };
+
+                                            const { error } = await supabase
+                                                .from('games')
+                                                .update({
+                                                        nowActionedCards: newNowActionedCards,
+                                                        doubleAuctionState: newDoubleAuctionState,
+                                                        phase: newPhase,
+                                                        nowTurn: newTurn,
+                                                        oneVoiceAuctionState: newOneVoiceAuctionState,
+                                                })
+                                                .eq("room_id", roomId)
+                                                .select()
+                                                .single();
+                                            if (error) {
+                                                console.error("ダブルオークション終了エラー", error);
+                                                return;
+                                            }
+                                        }
+                                        else {
+                                            const { error } = await supabase
+                                                .from('games')
+                                                .update({
+                                                        nowActionedCards: newNowActionedCards,
+                                                        doubleAuctionState: newDoubleAuctionState,
+                                                        phase: newPhase,
+                                                        nowTurn: newTurn
+                                                })
+                                                .eq("room_id", roomId)
+                                                .select()
+                                                .single();
+                                            if (error) {
+                                                console.error("ダブルオークション終了エラー", error);
+                                                return;
+                                            }
                                         }
                                     }
                                     // 誰もカードを出さなかった場合
