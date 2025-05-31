@@ -76,11 +76,10 @@ const GamePage = () => {
                                 const gemCounts = useGameStore.getState().gemCounts;
                                 const nowActionedCards: Card[] = payload.new.nowActionedCards;
 
-                                gemCounts[nowActionedCards[0].gem]++;
+                                nowActionedCards.forEach(card => {
+                                    gemCounts[card.gem]++;
 
-                                // nowActionedCards.forEach(card => {
-                                //     gemCounts[card.gem]++;
-                                // });
+                                });
     
                                 // 同じ宝石が5枚以上場に出たらラウンド終了
                                 let isRoundChange = false;
