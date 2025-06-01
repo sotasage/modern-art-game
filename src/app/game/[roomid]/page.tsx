@@ -78,8 +78,12 @@ const GamePage = () => {
 
                                 nowActionedCards.forEach(card => {
                                     gemCounts[card.gem]++;
-
                                 });
+
+                                // ダブルオークション単体で出したときに1枚計測されているため1マイナス
+                                if (payload.old.phase === "ダブルオークション") {
+                                    gemCounts[nowActionedCards[0].gem]--;
+                                }
     
                                 // 同じ宝石が5枚以上場に出たらラウンド終了
                                 let isRoundChange = false;
@@ -179,7 +183,7 @@ const GamePage = () => {
 
                                     addMessage("このラウンドで稼いだ額");
                                     players.map((player, index) => {
-                                        addMessage(`${player.name}: $${playerEarnings[index]}`);
+                                        addMessage(`${player.name}: $${playerEarnings[index].toLocaleString()}`);
                                     });
 
                                     // dbにデータ送信 deck hands money nowTurn marketValueList purchasedCards nowActionedCards phase round
@@ -329,7 +333,7 @@ const GamePage = () => {
                                 }
                                 // 誰かが賭け金を吊り上げた場合
                                 else {
-                                    addMessage(`${players[maxBetPlayerIndex].name}が金額を$${maxBetSize}に吊り上げました。`);
+                                    addMessage(`${players[maxBetPlayerIndex].name}が金額を$${maxBetSize.toLocaleString()}に吊り上げました。`);
                                 }
                                 // 残りのプレイヤーが1人の場合は終了
                                 if (finishCount >= players.length - 1) {
@@ -407,7 +411,7 @@ const GamePage = () => {
                                 // 最初のターン以外の場合
                                 if (prePlayer !== -1) {
                                     if (prePlayer === maxPlayer && maxBetSize !== 0) {
-                                        addMessage(`${players[prePlayer].name}が金額を$${oneVoiceAuctionState.maxBetSize}に吊り上げました。`);
+                                        addMessage(`${players[prePlayer].name}が金額を$${oneVoiceAuctionState.maxBetSize.toLocaleString()}に吊り上げました。`);
                                     }
                                     else {
                                         addMessage(`${players[prePlayer].name}はパスしました。`)
@@ -496,9 +500,9 @@ const GamePage = () => {
 
                                     addMessage("全員の入札額を発表します。");
                                     players.map((player, index) => {
-                                        addMessage(`${player.name}: $${bidAuctionState[index].betSize}`);
+                                        addMessage(`${player.name}: $${bidAuctionState[index].betSize.toLocaleString()}`);
                                     })
-                                    addMessage(`よって、${players[maxPlayer].name}が$${maxBetSize}で落札しました。`)
+                                    addMessage(`よって、${players[maxPlayer].name}が$${maxBetSize.toLocaleString()}で落札しました。`)
 
                                     const nowMoney = useGameStore.getState().money;
                                     const nowPurchasedCards = useGameStore.getState().purchasedCards;
@@ -551,13 +555,13 @@ const GamePage = () => {
                                 const nowTurn = payload.new.nowTurn;
 
                                 if (prePlayer === -1) {
-                                    addMessage(`${players[nowTurn].name}が売値を$${specifyAuctionState.betSize}に設定しました。`);
+                                    addMessage(`${players[nowTurn].name}が売値を$${specifyAuctionState.betSize.toLocaleString()}に設定しました。`);
                                     addMessage(`${players[specifyAuctionState.nowPlayer].name}は落札するかまたはパスしてください。`);
                                 }
                                 else {
                                     // 購入者が出た場合
                                     if (specifyAuctionState.isPurchased) {
-                                        addMessage(`${players[prePlayer].name}が$${specifyAuctionState.betSize}で落札しました。`);
+                                        addMessage(`${players[prePlayer].name}が$${specifyAuctionState.betSize.toLocaleString()}で落札しました。`);
 
                                         const nowMoney = useGameStore.getState().money;
                                         const nowPurchasedCards = useGameStore.getState().purchasedCards;
@@ -598,7 +602,7 @@ const GamePage = () => {
                                     }
                                     // 最後まで購入者が出なかった場合
                                     else if (specifyAuctionState.nowPlayer === nowTurn) {
-                                        addMessage(`全てのプレイヤーがパスしたため、${players[nowTurn].name}が$${specifyAuctionState.betSize}で落札しました。`)
+                                        addMessage(`全てのプレイヤーがパスしたため、${players[nowTurn].name}が$${specifyAuctionState.betSize.toLocaleString()}で落札しました。`)
 
                                         const nowMoney = useGameStore.getState().money;
                                         const nowPurchasedCards = useGameStore.getState().purchasedCards;
